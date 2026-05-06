@@ -429,7 +429,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 4: Clients CRUD**
+- [x] **Unit 4: Clients CRUD**
 
 **Goal:** Full create/read/update/delete for clients with list, create, edit, and delete flows.
 
