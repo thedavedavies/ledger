@@ -385,7 +385,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 3: Company profile (settings) + UI shell**
+- [x] **Unit 3: Company profile (settings) + UI shell**
 
 **Goal:** Render the app shell (top nav, layout) and the Settings page where the user edits the singleton company profile. PDFs depend on this data, so it ships first.
 

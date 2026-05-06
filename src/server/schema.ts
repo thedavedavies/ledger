@@ -25,6 +25,8 @@ export const companyProfile = pgTable(
     taxId: text('tax_id').notNull().default(''),
     defaultCurrency: text('default_currency').notNull().default('USD'),
     taxRate: numeric('tax_rate', { precision: 5, scale: 2 }).notNull().default('0'),
+    invoicePrefix: text('invoice_prefix').notNull().default('INV'),
+    logoPath: text('logo_path'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
