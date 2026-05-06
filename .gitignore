@@ -35,6 +35,7 @@ lib-cov
 dist/
 build/
 out/
+.output/
 .next/
 .nuxt/
 .cache/
@@ -42,6 +43,7 @@ out/
 .turbo/
 .vercel/
 .svelte-kit/
+.vinxi/
 
 # TypeScript
 *.tsbuildinfo

@@ -303,7 +303,7 @@ sequenceDiagram
 
 ## Implementation Units
 
-- [ ] **Unit 1: Project scaffold + tooling**
+- [x] **Unit 1: Project scaffold + tooling**
 
 **Goal:** Bootstrap a runnable TanStack Start v1 + Vite + TypeScript + Tailwind + shadcn project with Vitest configured, lint/format wired, and an empty home route that renders.
 
