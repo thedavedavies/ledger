@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Printer } from 'lucide-react'
+import { Download, Printer } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -147,6 +147,15 @@ function InvoiceViewPage() {
             onClick={() => setShowDelete(true)}
           >
             Delete
+          </Button>
+          <Button variant="outline" asChild>
+            <a
+              href={`/api/invoices/${inv.id}/pdf`}
+              download={`${inv.number}.pdf`}
+            >
+              <Download className="size-4" />
+              Download PDF
+            </a>
           </Button>
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="size-4" />

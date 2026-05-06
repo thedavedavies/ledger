@@ -17,6 +17,7 @@ import { Route as InvoicesInvoiceIdRouteImport } from './routes/invoices/$invoic
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
 import { Route as InvoicesInvoiceIdEditRouteImport } from './routes/invoices/$invoiceId/edit'
+import { Route as ApiInvoicesInvoiceIdPdfRouteImport } from './routes/api/invoices/$invoiceId/pdf'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -58,6 +59,11 @@ const InvoicesInvoiceIdEditRoute = InvoicesInvoiceIdEditRouteImport.update({
   path: '/edit',
   getParentRoute: () => InvoicesInvoiceIdRoute,
 } as any)
+const ApiInvoicesInvoiceIdPdfRoute = ApiInvoicesInvoiceIdPdfRouteImport.update({
+  id: '/api/invoices/$invoiceId/pdf',
+  path: '/api/invoices/$invoiceId/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/invoices/new': typeof InvoicesNewRoute
   '/clients/': typeof ClientsIndexRoute
   '/invoices/$invoiceId/edit': typeof InvoicesInvoiceIdEditRoute
+  '/api/invoices/$invoiceId/pdf': typeof ApiInvoicesInvoiceIdPdfRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/invoices/new': typeof InvoicesNewRoute
   '/clients': typeof ClientsIndexRoute
   '/invoices/$invoiceId/edit': typeof InvoicesInvoiceIdEditRoute
+  '/api/invoices/$invoiceId/pdf': typeof ApiInvoicesInvoiceIdPdfRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/invoices/new': typeof InvoicesNewRoute
   '/clients/': typeof ClientsIndexRoute
   '/invoices/$invoiceId/edit': typeof InvoicesInvoiceIdEditRoute
+  '/api/invoices/$invoiceId/pdf': typeof ApiInvoicesInvoiceIdPdfRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/invoices/new'
     | '/clients/'
     | '/invoices/$invoiceId/edit'
+    | '/api/invoices/$invoiceId/pdf'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/invoices/new'
     | '/clients'
     | '/invoices/$invoiceId/edit'
+    | '/api/invoices/$invoiceId/pdf'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/invoices/new'
     | '/clients/'
     | '/invoices/$invoiceId/edit'
+    | '/api/invoices/$invoiceId/pdf'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   InvoicesInvoiceIdRoute: typeof InvoicesInvoiceIdRouteWithChildren
   InvoicesNewRoute: typeof InvoicesNewRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
+  ApiInvoicesInvoiceIdPdfRoute: typeof ApiInvoicesInvoiceIdPdfRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvoicesInvoiceIdEditRouteImport
       parentRoute: typeof InvoicesInvoiceIdRoute
     }
+    '/api/invoices/$invoiceId/pdf': {
+      id: '/api/invoices/$invoiceId/pdf'
+      path: '/api/invoices/$invoiceId/pdf'
+      fullPath: '/api/invoices/$invoiceId/pdf'
+      preLoaderRoute: typeof ApiInvoicesInvoiceIdPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -213,6 +233,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvoicesInvoiceIdRoute: InvoicesInvoiceIdRouteWithChildren,
   InvoicesNewRoute: InvoicesNewRoute,
   ClientsIndexRoute: ClientsIndexRoute,
+  ApiInvoicesInvoiceIdPdfRoute: ApiInvoicesInvoiceIdPdfRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

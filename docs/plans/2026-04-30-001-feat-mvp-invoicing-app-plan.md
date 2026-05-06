@@ -535,7 +535,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 6: Invoice PDF render + download**
+- [x] **Unit 6: Invoice PDF render + download**
 
 **Goal:** Render an A4 PDF of any invoice and serve it from a route that browsers can download or open.
 
