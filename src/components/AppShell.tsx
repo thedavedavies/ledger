@@ -1,12 +1,15 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Invoices' },
-  { to: '/clients', label: 'Clients' },
-  { to: '/settings', label: 'Settings' },
+  { to: '/', label: 'Invoices', match: (p: string) => p === '/' || p.startsWith('/invoices') },
+  { to: '/clients', label: 'Clients', match: (p: string) => p.startsWith('/clients') },
+  { to: '/settings', label: 'Settings', match: (p: string) => p.startsWith('/settings') },
 ] as const
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  const pathname = location.pathname
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background">
@@ -19,9 +22,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
-                activeProps={{ className: 'active text-foreground' }}
-                activeOptions={{ exact: item.to === '/' }}
+                className={`text-sm font-medium transition-colors hover:text-foreground ${
+                  item.match(pathname) ? 'text-foreground' : 'text-muted-foreground'
+                }`}
               >
                 {item.label}
               </Link>

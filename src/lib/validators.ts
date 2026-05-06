@@ -58,3 +58,61 @@ export const clientInput = z.object({
 })
 
 export type ClientInput = z.infer<typeof clientInput>
+
+export const invoiceLineInput = z.object({
+  description: z
+    .string()
+    .min(1, 'Description is required')
+    .max(500, 'Description must be 500 characters or fewer'),
+  quantity: z
+    .string()
+    .refine(
+      (v) => {
+        if (v === '') return false
+        const n = Number(v)
+        return !isNaN(n) && n > 0
+      },
+      { message: 'Quantity must be greater than 0' },
+    ),
+  unitPrice: z
+    .string()
+    .refine(
+      (v) => {
+        if (v === '') return false
+        const n = Number(v)
+        return !isNaN(n) && n >= 0
+      },
+      { message: 'Unit price must be 0 or greater' },
+    ),
+})
+
+export type InvoiceLineInput = z.infer<typeof invoiceLineInput>
+
+export const invoiceInput = z.object({
+  clientId: z.string().uuid('Please select a client'),
+  issueDate: z.string().min(1, 'Issue date is required'),
+  dueDate: z.string().min(1, 'Due date is required'),
+  taxRate: z
+    .string()
+    .refine(
+      (v) => {
+        if (v === '') return true
+        const n = Number(v)
+        return !isNaN(n) && n >= 0 && n <= 100
+      },
+      { message: 'Tax rate must be between 0 and 100' },
+    )
+    .default('0'),
+  notes: z.string().max(2000, 'Notes must be 2000 characters or fewer').default(''),
+  lineItems: z
+    .array(invoiceLineInput)
+    .min(1, 'An invoice needs at least one line item')
+    .max(100, 'Maximum 100 line items per invoice'),
+})
+
+export type InvoiceInput = z.infer<typeof invoiceInput>
+
+export const invoiceStatusInput = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['draft', 'sent', 'paid', 'void']),
+})

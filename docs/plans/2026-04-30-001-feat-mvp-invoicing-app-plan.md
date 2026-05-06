@@ -469,7 +469,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 5: Invoices CRUD with line items, totals, numbering**
+- [x] **Unit 5: Invoices CRUD with line items, totals, numbering**
 
 **Goal:** Full CRUD for invoices: pick a client, add/edit/remove line items, see live totals, persist with a guaranteed-unique invoice number, transition status manually.
 
