@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: invoice
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d invoice"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: npx tsx scripts/migrate.ts
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/invoice
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: node dist/server/server.js
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/invoice
+      PORT: "3000"
+      UPLOADS_DIR: /app/uploads
+      PDF_RENDER_CONCURRENCY: "4"
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${PORT:-3000}:3000"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:

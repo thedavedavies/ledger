@@ -582,7 +582,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 7: Docker Compose self-host**
+- [x] **Unit 7: Docker Compose self-host**
 
 **Goal:** A single `docker compose up -d` starts Postgres, runs migrations, and serves the app, on a fresh machine with only Docker installed.
 
