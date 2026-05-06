@@ -341,7 +341,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 2: Database schema, Drizzle setup, migrations pipeline**
+- [x] **Unit 2: Database schema, Drizzle setup, migrations pipeline**
 
 **Goal:** Define the full MVP schema in one Drizzle module, generate the initial migration, and wire a `migrate` runner that the app and Compose use. Unit 2 provides the schema substrate that Units 3, 4, and 5 build features on; the actual UI/server-fn satisfying each requirement lives in those units.
 
