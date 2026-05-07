@@ -27,12 +27,14 @@ function EditClientPage() {
       <ClientForm
         defaultValues={{
           name: clientData.name,
+          companyName: clientData.companyName,
           email: clientData.email,
           address: clientData.address,
           city: clientData.city,
           postcode: clientData.postcode,
           country: clientData.country,
           phone: clientData.phone,
+          notes: clientData.notes,
         }}
         submitLabel="Save changes"
         onSubmit={async (data) => {

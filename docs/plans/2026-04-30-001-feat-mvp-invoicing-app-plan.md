@@ -263,6 +263,17 @@ erDiagram
     }
 ```
 
+### Schema as shipped (post Unit 11, 2026-05-07)
+
+The implemented schema diverges from the original mermaid block above. The shipped shape (after Unit 11's reconciliation):
+
+- **`client`**: `id (uuid)`, `name`, `company_name`, `email`, `address`, `city`, `postcode`, `country`, `phone`, `notes`, `created_at`, `updated_at`. The original plan called for a single `address_block` text column — the implementer used split fields (`address` + `city` + `postcode` + `country`) instead. Decision 2026-05-07: the split shape is the canonical one going forward; `address_line2` was not added because the live UX hasn't surfaced a need for it yet (add it as a separate plan when needed).
+- **`company_profile`**: same split-address shape as `client` plus a `tax_id` text column. The plan's `default_tax_basis_points` is implemented as a `tax_rate numeric(5,2)` percentage column, not basis points — a decision the implementer made silently. **This is a known deviation** that should be revisited if precise basis-point tax math becomes important.
+- **`invoice`**: `currency` is not a per-invoice column. The implementation uses the company profile's `default_currency` for every invoice. Per-invoice currency override is deferred.
+- **`invoice_line_item`**: `position` was implemented as `sort_order`. Same semantics, different name.
+
+The original mermaid diagram remains as the historical plan record. Subsequent plans should update against the "as shipped" shape.
+
 ### Request shape — create invoice
 
 ```mermaid
@@ -742,7 +753,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 11: Schema reconciliation — restore missing client fields, formalise split address shape**
+- [x] **Unit 11: Schema reconciliation — restore missing client fields, formalise split address shape**
 
 **Goal:** Bring the implemented schema and the plan's data model back in sync, in favour of the **split address shape** that's currently live (decided 2026-05-07: split fields stay; the plan's original `address_block` is replaced).
 

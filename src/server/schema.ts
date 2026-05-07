@@ -36,12 +36,14 @@ export const companyProfile = pgTable(
 export const client = pgTable('client', {
   id: uuid().primaryKey().default(sql`gen_random_uuid()`),
   name: text().notNull(),
+  companyName: text('company_name').notNull().default(''),
   email: text().notNull(),
   address: text().notNull().default(''),
   city: text().notNull().default(''),
   postcode: text().notNull().default(''),
   country: text().notNull().default(''),
   phone: text().notNull().default(''),
+  notes: text().notNull().default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

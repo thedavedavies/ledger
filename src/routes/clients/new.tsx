@@ -20,12 +20,14 @@ function NewClientPage() {
       <ClientForm
         defaultValues={{
           name: '',
+          companyName: '',
           email: '',
           address: '',
           city: '',
           postcode: '',
           country: '',
           phone: '',
+          notes: '',
         }}
         submitLabel="Create client"
         onSubmit={async (data) => {

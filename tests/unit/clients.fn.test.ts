@@ -42,7 +42,7 @@ describe('clientInput validator', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe('Client name is required')
+      expect(result.error.issues[0]?.message).toBe('Contact name is required')
     }
   })
 
@@ -157,12 +157,14 @@ describe('clientInput validator', () => {
     if (result.success) {
       expect(result.data).toEqual({
         name: 'Test Client',
+        companyName: '',
         email: '',
         address: '',
         city: '',
         postcode: '',
         country: '',
         phone: '',
+        notes: '',
       })
     }
   })

@@ -15,6 +15,13 @@
       "when": 1778094572178,
       "tag": "0001_faithful_lila_cheney",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778157045939,
+      "tag": "0002_tan_arclight",
+      "breakpoints": true
     }
   ]
 }

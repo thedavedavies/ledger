@@ -43,8 +43,12 @@ export type CompanyProfileInput = z.infer<typeof companyProfileInput>
 export const clientInput = z.object({
   name: z
     .string()
-    .min(1, 'Client name is required')
+    .min(1, 'Contact name is required')
     .max(200, 'Name must be 200 characters or fewer'),
+  companyName: z
+    .string()
+    .max(200, 'Company name must be 200 characters or fewer')
+    .default(''),
   email: z
     .string()
     .email('Invalid email address')
@@ -55,6 +59,7 @@ export const clientInput = z.object({
   postcode: z.string().max(20, 'Postcode must be 20 characters or fewer').default(''),
   country: z.string().max(100, 'Country must be 100 characters or fewer').default(''),
   phone: z.string().max(30, 'Phone must be 30 characters or fewer').default(''),
+  notes: z.string().max(2000, 'Notes must be 2000 characters or fewer').default(''),
 })
 
 export type ClientInput = z.infer<typeof clientInput>

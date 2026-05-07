@@ -11,6 +11,7 @@ export const listClients = createServerFn({ method: 'GET' }).handler(
       .select({
         id: client.id,
         name: client.name,
+        companyName: client.companyName,
         email: client.email,
         phone: client.phone,
         invoiceCount: sql<number>`cast(count(${invoice.id}) as int)`,
@@ -44,12 +45,14 @@ export const createClient = createServerFn({ method: 'POST' })
       .insert(client)
       .values({
         name: data.name,
+        companyName: data.companyName,
         email: data.email,
         address: data.address,
         city: data.city,
         postcode: data.postcode,
         country: data.country,
         phone: data.phone,
+        notes: data.notes,
       })
       .returning()
 

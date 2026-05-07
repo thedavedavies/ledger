@@ -85,7 +85,8 @@ function ClientsListPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Company</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="text-right">Invoices</TableHead>
                 <TableHead className="w-[100px]" />
@@ -102,6 +103,9 @@ function ClientsListPage() {
                     >
                       {c.name}
                     </Link>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {c.companyName || '—'}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {c.email || '—'}

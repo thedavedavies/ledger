@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { Textarea } from '#/components/ui/textarea'
 import { clientInput, type ClientInput } from '#/lib/validators'
 
 interface ClientFormProps {
@@ -47,7 +48,23 @@ export function ClientForm({
         <form.Field name="name">
           {(field) => (
             <FormField
-              label="Client name"
+              label="Contact name"
+              error={field.state.meta.errorMap.onChange}
+            >
+              <Input
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="Jane Doe"
+              />
+            </FormField>
+          )}
+        </form.Field>
+
+        <form.Field name="companyName">
+          {(field) => (
+            <FormField
+              label="Company name"
               error={field.state.meta.errorMap.onChange}
             >
               <Input
@@ -150,6 +167,23 @@ export function ClientForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
+              />
+            </FormField>
+          )}
+        </form.Field>
+
+        <form.Field name="notes">
+          {(field) => (
+            <FormField
+              label="Notes"
+              error={field.state.meta.errorMap.onChange}
+            >
+              <Textarea
+                rows={4}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="Net 30 terms, PO number required, etc."
               />
             </FormField>
           )}
