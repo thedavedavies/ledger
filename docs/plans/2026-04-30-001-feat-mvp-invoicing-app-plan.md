@@ -672,6 +672,118 @@ sequenceDiagram
 - The repo's "About" sidebar on GitHub shows AGPL-3.0 detected.
 - DCO bot blocks unsigned commits.
 
+---
+
+- [ ] **Unit 9: Visual fidelity pass — typography, palette, status pills, brand mark**
+
+**Goal:** Bring the live UI in line with the design's visual identity for the MVP screens. Out of scope: any feature the designs depict that is not yet implemented (those are still deferred). In scope: typography, colour, spacing, status badges, and the navigation/brand mark.
+
+**Requirements:** Foundation for R1–R5 visually. No new functionality.
+
+**Dependencies:** Units 1, 3, 4, 5, 6 (shipped UI to restyle).
+
+**Files:**
+- Modify: `src/styles.css` (Tailwind theme tokens for colour + serif font family)
+- Modify: `tailwind.config.ts` if present (CSS-first @theme setup also acceptable)
+- Modify: `src/components/AppShell.tsx` (or equivalent) — fix the duplicate "Invoices" brand-mark issue
+- Modify: any status-badge component(s) under `src/components/` (locate via grep — they were introduced by Unit 5)
+- Modify: shadcn primitive overrides where needed to pick up the serif display family on headings
+- Possibly modify: `src/routes/__root.tsx` to set the body class for cream background
+
+**Approach:**
+- **Reference:** read the six PNGs under `design/screenshots/`. Use Read on each before writing CSS. Match what's actually visible: the warm cream/off-white page background, serif display family for screen titles ("Invoices", "Settings", "New invoice"), the elegant sidebar in the design IS NOT in scope (top nav stays, per Unit 3) — but typography/palette of the top nav SHOULD match the design's visual language.
+- **Palette:** introduce a small, named set of theme tokens (e.g. `--bg`, `--bg-elevated`, `--ink`, `--ink-muted`, `--border`, `--accent`, `--status-draft`, `--status-sent`, `--status-paid`, `--status-void`). Pick concrete hex/oklch values that approximate what's in the screenshots. Do not use design system tokens you can't see in the PNGs.
+- **Type:** add a serif display font for `h1`/`h2` on screen titles. Use Tailwind's `font-serif` family override or import a free serif (e.g. EB Garamond, Cardo, Source Serif 4) via `@font-face` from a self-hosted file or a permissive CDN. Body copy stays in the existing sans (Inter or system).
+- **Status pills:** match the design — `draft` neutral grey with grey text, `sent` blue tinted, `paid` green tinted, `void` muted with row-level strikethrough. Use the exact palette tokens introduced above.
+- **Brand mark:** the live header reads "Invoices Invoices Clients Settings" because the brand-mark text and the first nav item are both literally "Invoices". Change the brand to a wordmark (a simple text mark — pick one of: "Ledger", "Invoice Software", or a small logo glyph). Keep it deliberately distinct from the nav items. The design uses "Ledger." but the plan rejected that brand name — pick "Invoice Software" or leave it as a small monogram for now and document the choice.
+- **No layout/structure changes** beyond what's needed to apply the palette/typography/badges. Do not restructure routes, schema, server fns, or shadcn primitives. If a component needs a new variant, add the variant — don't replace the primitive.
+- **Verify visually:** boot `npm run dev` (the dev DB must be running — see `docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md` self-host docs), navigate to `/`, `/settings`, `/clients`, `/clients/new`, `/invoices/new`. Confirm cream bg and serif type render. The agent in the sandbox cannot run a browser — describe expected visual outcome in the commit body and rely on the reviewer iteration's structural checks.
+
+**Patterns to follow:**
+- Tailwind v4 CSS-first `@theme` for tokens (`src/styles.css`).
+- Self-host the font under `public/fonts/` if a free file is available; otherwise reference a CDN-hosted licensed-for-web file.
+
+**Test scenarios:**
+- *Happy path:* `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build` all pass after the visual changes.
+- *Happy path:* The header no longer renders the word "Invoices" twice in a row.
+- *Snapshot:* Add a Vitest snapshot on a tiny sample of the AppShell + a Status badge so future palette drift is caught.
+
+**Verification:**
+- Plan checkbox 9 flipped to `[x]`.
+- Commit body lists the chosen serif family (with license note), the palette tokens added, the brand mark decision.
+
+---
+
+- [ ] **Unit 10: Fix pre-existing typecheck error in `src/server/numbering.ts`**
+
+**Goal:** `npm run typecheck` returns zero errors. The Unit 7 commit body flagged a pre-existing typecheck error introduced in Unit 5; this unit fixes it.
+
+**Requirements:** Restore the typecheck quality gate to clean.
+
+**Dependencies:** Unit 5.
+
+**Files:**
+- Modify: `src/server/numbering.ts` (whatever line the typecheck flags)
+- Possibly modify: callers of `allocateInvoiceNumber` if the fix changes a signature
+
+**Approach:**
+- Run `npm run typecheck` first, read the error, fix the smallest thing that makes it pass without changing observed behaviour.
+- Do not silence with `as any` or `// @ts-expect-error` unless the underlying constraint is genuinely impossible to satisfy with types.
+- Re-run typecheck and the existing `tests/unit/numbering.test.ts` to confirm.
+
+**Test scenarios:**
+- *Happy path:* `npm run typecheck` exits 0.
+- *Happy path:* `npm run test -- numbering` still passes.
+- *Edge case:* If the fix changed a signature, all callers compile.
+
+**Verification:**
+- Plan checkbox 10 flipped to `[x]`.
+- Commit body shows the original error message and the fix applied (one or two lines).
+
+---
+
+- [ ] **Unit 11: Schema reconciliation — restore missing client fields, formalise split address shape**
+
+**Goal:** Bring the implemented schema and the plan's data model back in sync, in favour of the **split address shape** that's currently live (decided 2026-05-07: split fields stay; the plan's original `address_block` is replaced).
+
+**Requirements:** R1 (clients), R5 (company profile).
+
+**Dependencies:** Units 2, 3, 4.
+
+**Files:**
+- Modify: `src/server/schema.ts` (split address columns; restore `company_name` + `notes` on clients if missing)
+- Generate: `drizzle/0002_*.sql` migration for any added columns
+- Modify: `src/lib/validators.ts` (`ClientInput`, `CompanyProfileInput` — add `companyName`, `notes` for clients; ensure split-address fields are validated)
+- Modify: `src/server/clients.fn.ts`, `src/server/settings.fn.ts` (handle the new fields)
+- Modify: `src/routes/clients/new.tsx`, `src/routes/clients/$clientId.tsx`, `src/routes/settings.tsx` (form fields for `company_name` + `notes`)
+- Modify: `src/server/pdf/invoice-template.tsx` (render multi-field address as a stacked block: line1, line2, city, postcode, country)
+- Modify the **plan** (this file) data-model mermaid block to reflect the split-address columns + `phone` + `tax_id` reality (do not delete the original — leave a "Schema-as-shipped" subsection capturing what's actually in the DB after Unit 11).
+
+**Approach:**
+- **Address shape (decided):** keep the existing split columns on both `client` and `company_profile`: `address_line1`, `address_line2` (nullable), `city`, `postcode`, `country`. If the live schema uses different names, keep the live names — do not rename for cosmetics. Confirm what's there with `cat src/server/schema.ts` before writing the migration.
+- **Client missing fields:** `company_name` (text, nullable) and `notes` (text, nullable) — both were in the original plan and the design but were dropped during Unit 4 implementation. Add them back. The clients list should now show `company_name` if present (otherwise empty), per the original plan's "name, company, email, invoice count" column shape.
+- **Company profile extra fields:** `phone` and `tax_id` are not in the original plan but are live. Document them in the plan's "Schema-as-shipped" subsection. Keep them — they're useful for invoices.
+- **PDF template:** the address must render as a multi-line block (line1, line2 if present, "city, postcode", country) — match the design's invoice layout (`design/screenshots/05-invoice-detail.png`).
+- **Migration:** `npm run db:generate` to author the SQL; commit the generated `drizzle/0002_*.sql` alongside the schema change. Apply with `npm run db:migrate` against the dev DB and confirm idempotent re-run.
+- **Plan update:** in this file, find the data-model mermaid block under "## High-Level Technical Design > Data model", and **append** a new subsection titled "### Schema as shipped (post Unit 11)" that lists the split-address columns and the extra `phone`/`tax_id` columns. Do not delete the original mermaid block — that's the historical plan record.
+
+**Patterns to follow:**
+- Drizzle schema column order: business columns, then `created_at`, `updated_at`.
+- Migrations are append-only; never edit `drizzle/0001_init.sql`.
+
+**Test scenarios:**
+- *Happy path:* `npm run db:migrate` against the dev DB applies `0002_*.sql` and adds the missing columns; re-run is a no-op.
+- *Happy path:* Create a client with `company_name` + `notes` → values persist and render on the edit page.
+- *Happy path:* Render the invoice PDF for an invoice whose client has a multi-line address — output PDF contains the full address block.
+- *Edge case:* Existing clients (created before the migration) have `null` `company_name` and `notes` — the UI renders empty strings, not "null".
+
+**Verification:**
+- Plan checkbox 11 flipped to `[x]`.
+- The "Schema as shipped (post Unit 11)" subsection is present in this file.
+- All quality gates green.
+
+---
+
 ## System-Wide Impact
 
 - **Interaction graph (current MVP):** Three subsystems — Settings, Clients, Invoices — share a single Postgres instance and the company-profile singleton. Invoices read both `client` and `company_profile`. The PDF subsystem reads invoices, line items, the referenced client, and the company profile in one query.
