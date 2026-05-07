@@ -73,3 +73,10 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/invoice
           BASE_URL: http://localhost:3000
           CI: true
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -f docker/Dockerfile -t invoice-software:ci .

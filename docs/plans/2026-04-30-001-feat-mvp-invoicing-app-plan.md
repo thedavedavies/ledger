@@ -633,7 +633,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 8: Repo essentials — license, README, contributing, basic CI polish**
+- [x] **Unit 8: Repo essentials — license, README, contributing, basic CI polish**
 
 **Goal:** Make the repo legitimately open-source: AGPL license file, README that explains the project and how to self-host, CONTRIBUTING with DCO, code of conduct, and CI workflow polish.
 
