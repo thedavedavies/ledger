@@ -22,6 +22,10 @@ export async function allocateInvoiceNumber(
     RETURNING last_value
   `)
 
-  const lastValue = Number(result[0].last_value)
+  const row = result[0]
+  if (!row) {
+    throw new Error('allocateInvoiceNumber: INSERT ... RETURNING returned no rows')
+  }
+  const lastValue = Number(row.last_value)
   return formatInvoiceNumber(prefix, year, lastValue)
 }

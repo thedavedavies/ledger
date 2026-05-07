@@ -714,7 +714,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 10: Fix pre-existing typecheck error in `src/server/numbering.ts`**
+- [x] **Unit 10: Fix pre-existing typecheck error in `src/server/numbering.ts`**
 
 **Goal:** `npm run typecheck` returns zero errors. The Unit 7 commit body flagged a pre-existing typecheck error introduced in Unit 5; this unit fixes it.
 
