@@ -1,28 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
 
-  --color-background: #ffffff;
-  --color-foreground: #0a0a0a;
-  --color-muted: #f5f5f5;
-  --color-muted-foreground: #737373;
-  --color-border: #e5e5e5;
-  --color-input: #e5e5e5;
-  --color-ring: #0a0a0a;
-  --color-primary: #0a0a0a;
-  --color-primary-foreground: #fafafa;
-  --color-secondary: #f5f5f5;
-  --color-secondary-foreground: #0a0a0a;
-  --color-accent: #f5f5f5;
-  --color-accent-foreground: #0a0a0a;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #fafafa;
-  --color-card: #ffffff;
-  --color-card-foreground: #0a0a0a;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #0a0a0a;
+  /* Warm cream palette inspired by the design exports.  The page sits on a
+     muted off-white; cards and inputs lift very slightly with a paler tone. */
+  --color-background: #f5f1ea;
+  --color-foreground: #1a1a1a;
+  --color-muted: #ebe6dc;
+  --color-muted-foreground: #6b665e;
+  --color-border: #e0d9cc;
+  --color-input: #d8d2c4;
+  --color-ring: #1a1a1a;
+
+  --color-primary: #1a1a1a;
+  --color-primary-foreground: #faf8f3;
+  --color-secondary: #ebe6dc;
+  --color-secondary-foreground: #1a1a1a;
+  --color-accent: #ebe6dc;
+  --color-accent-foreground: #1a1a1a;
+  --color-destructive: #b34646;
+  --color-destructive-foreground: #faf8f3;
+
+  --color-card: #faf8f3;
+  --color-card-foreground: #1a1a1a;
+  --color-popover: #faf8f3;
+  --color-popover-foreground: #1a1a1a;
+
+  /* Status-pill tokens (draft/sent/paid/void per plan; no Overdue) */
+  --color-status-draft-bg: #e3dfd5;
+  --color-status-draft-fg: #4a463e;
+  --color-status-sent-bg: #d6dfe9;
+  --color-status-sent-fg: #2c4763;
+  --color-status-paid-bg: #d6e1d3;
+  --color-status-paid-fg: #2f5d3a;
+  --color-status-void-fg: #8a857a;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -48,4 +63,42 @@ body {
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display headings sit in serif by default; the existing utility classes
+   (font-semibold, tracking-tight, text-2xl) still apply on top.  Overriding
+   here keeps individual route components from each having to remember to
+   add font-serif. */
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .status-draft {
+    background-color: var(--color-status-draft-bg);
+    color: var(--color-status-draft-fg);
+  }
+  .status-sent {
+    background-color: var(--color-status-sent-bg);
+    color: var(--color-status-sent-fg);
+  }
+  .status-paid {
+    background-color: var(--color-status-paid-bg);
+    color: var(--color-status-paid-fg);
+  }
+  .status-void {
+    color: var(--color-status-void-fg);
+  }
 }

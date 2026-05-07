@@ -13,9 +13,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-8 px-6">
-          <Link to="/" className="text-base font-semibold tracking-tight text-foreground">
-            Invoices
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-10 px-6">
+          <Link
+            to="/"
+            className="font-serif text-lg italic tracking-tight text-foreground"
+          >
+            Invoice Software
           </Link>
           <nav className="flex items-center gap-6">
             {NAV_ITEMS.map((item) => (

@@ -36,17 +36,15 @@ export const Route = createFileRoute('/')({
 })
 
 const STATUS_STYLES: Record<InvoiceStatus, string> = {
-  draft: 'bg-gray-100 text-gray-700',
-  sent: 'bg-blue-100 text-blue-700',
-  paid: 'bg-green-100 text-green-700',
-  void: 'bg-gray-100 text-gray-400',
+  draft: 'status-draft',
+  sent: 'status-sent',
+  paid: 'status-paid',
+  void: 'status-void',
 }
 
 function StatusBadge({ status }: { status: InvoiceStatus }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[status]}`}
-    >
+    <span className={`status-pill ${STATUS_STYLES[status]}`}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   )

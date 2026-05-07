@@ -685,7 +685,7 @@ sequenceDiagram
 
 ---
 
-- [ ] **Unit 9: Visual fidelity pass — typography, palette, status pills, brand mark**
+- [x] **Unit 9: Visual fidelity pass — typography, palette, status pills, brand mark**
 
 **Goal:** Bring the live UI in line with the design's visual identity for the MVP screens. Out of scope: any feature the designs depict that is not yet implemented (those are still deferred). In scope: typography, colour, spacing, status badges, and the navigation/brand mark.
 
