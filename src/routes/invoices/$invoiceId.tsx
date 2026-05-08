@@ -16,7 +16,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '#/components/ui/select'
 import {
   Table,
@@ -48,10 +47,10 @@ export const Route = createFileRoute('/invoices/$invoiceId')({
 })
 
 const STATUS_STYLES: Record<InvoiceStatus, string> = {
-  draft: 'bg-gray-100 text-gray-700',
-  sent: 'bg-blue-100 text-blue-700',
-  paid: 'bg-green-100 text-green-700',
-  void: 'bg-gray-100 text-gray-400',
+  draft: 'status-draft',
+  sent: 'status-sent',
+  paid: 'status-paid',
+  void: 'status-void',
 }
 
 const STATUSES: InvoiceStatus[] = ['draft', 'sent', 'paid', 'void']
@@ -110,9 +109,7 @@ function InvoiceViewPage() {
             <h1 className="text-2xl font-semibold tracking-tight">
               {inv.number}
             </h1>
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[inv.status]}`}
-            >
+            <span className={`status-pill ${STATUS_STYLES[inv.status]}`}>
               {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
             </span>
           </div>
@@ -123,7 +120,10 @@ function InvoiceViewPage() {
         <div className="flex items-center gap-2">
           <Select value={inv.status} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-32">
-              <SelectValue />
+              {/* Render the current status directly; Radix's <SelectValue />
+                  relies on the matching SelectItem being mounted, but the
+                  items live in a portal that only mounts on open. */}
+              <span className="capitalize">{inv.status}</span>
             </SelectTrigger>
             <SelectContent>
               {STATUSES.map((s) => (
