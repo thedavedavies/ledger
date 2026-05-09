@@ -16,6 +16,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from '#/components/ui/select'
 import {
   Table,
@@ -120,10 +121,11 @@ function InvoiceViewPage() {
         <div className="flex items-center gap-2">
           <Select value={inv.status} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-32">
-              {/* Render the current status directly; Radix's <SelectValue />
-                  relies on the matching SelectItem being mounted, but the
-                  items live in a portal that only mounts on open. */}
-              <span className="capitalize">{inv.status}</span>
+              <SelectValue
+                placeholder={
+                  inv.status.charAt(0).toUpperCase() + inv.status.slice(1)
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               {STATUSES.map((s) => (
