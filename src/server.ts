@@ -11,8 +11,25 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Referrer-Policy': 'same-origin',
 }
 
-const CSP =
-  "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+// Production CSP. TanStack Start ships an inline `<script type="module">`
+// that bootstraps hydration, so 'unsafe-inline' on script-src is required
+// here without a nonce/hashes scheme. style-src + font-src allow the
+// Google Fonts CDN used by src/styles.css. connect-src 'self' covers
+// same-origin server-fn POSTs.
+//
+// In dev, Vite/HMR uses inline modules, dynamic imports, eval, and a
+// websocket — we skip CSP entirely so the dev experience isn't crippled.
+// (X-Frame-Options, nosniff, Referrer-Policy still apply.)
+const CSP = [
+  "default-src 'self'",
+  "img-src 'self' data:",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "script-src 'self' 'unsafe-inline'",
+  "connect-src 'self'",
+].join('; ')
+
+const IS_PROD = process.env['NODE_ENV'] === 'production'
 
 function checkOrigin(request: Request): Response | null {
   if (!MUTATING_METHODS.has(request.method)) return null
@@ -42,7 +59,7 @@ function addSecurityHeaders(response: Response): Response {
   }
 
   const contentType = response.headers.get('Content-Type') ?? ''
-  if (contentType.includes('text/html')) {
+  if (IS_PROD && contentType.includes('text/html')) {
     response.headers.set('Content-Security-Policy', CSP)
   }
 
