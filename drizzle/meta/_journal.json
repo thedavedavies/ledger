@@ -22,6 +22,13 @@
       "when": 1778157045939,
       "tag": "0002_tan_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778355583539,
+      "tag": "0003_flaky_sprite",
+      "breakpoints": true
     }
   ]
 }

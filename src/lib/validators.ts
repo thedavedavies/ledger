@@ -121,3 +121,26 @@ export const invoiceStatusInput = z.object({
   id: z.string().uuid(),
   status: z.enum(['draft', 'sent', 'paid', 'void']),
 })
+
+export const paymentInput = z.object({
+  invoiceId: z.string().uuid(),
+  amount: z
+    .string()
+    .refine(
+      (v) => {
+        if (v === '') return false
+        const n = Number(v)
+        return !isNaN(n) && n > 0
+      },
+      { message: 'Amount must be greater than 0' },
+    ),
+  paidAt: z.string().min(1, 'Date is required'),
+  method: z.string().max(100, 'Method must be 100 characters or fewer').default(''),
+  reference: z
+    .string()
+    .max(100, 'Reference must be 100 characters or fewer')
+    .default(''),
+  notes: z.string().max(2000, 'Notes must be 2000 characters or fewer').default(''),
+})
+
+export type PaymentInput = z.infer<typeof paymentInput>

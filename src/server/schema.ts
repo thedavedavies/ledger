@@ -90,3 +90,17 @@ export const numberSequence = pgTable('number_sequence', {
   year: integer().primaryKey(),
   lastValue: integer('last_value').notNull().default(0),
 })
+
+export const payment = pgTable('payment', {
+  id: uuid().primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: uuid('invoice_id')
+    .notNull()
+    .references(() => invoice.id, { onDelete: 'cascade' }),
+  amountCents: bigint('amount_cents', { mode: 'bigint' }).notNull(),
+  paidAt: timestamp('paid_at', { withTimezone: true }).notNull(),
+  method: text().notNull().default(''),
+  reference: text().notNull().default(''),
+  notes: text().notNull().default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})

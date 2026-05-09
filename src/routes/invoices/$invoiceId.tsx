@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Download, Printer } from 'lucide-react'
+import { Download, Plus, Printer, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { RecordPaymentDialog } from '#/components/RecordPaymentDialog'
 import { formatMoney } from '#/lib/money'
 import { getCompanyProfile } from '#/server/settings.fn'
 import {
@@ -33,15 +34,17 @@ import {
   deleteInvoice,
   updateInvoiceStatus,
 } from '#/server/invoices.fn'
+import { listPayments, deletePayment } from '#/server/payments.fn'
 import type { InvoiceStatus } from '#/server/schema'
 
 export const Route = createFileRoute('/invoices/$invoiceId')({
   loader: async ({ params }) => {
-    const [inv, profile] = await Promise.all([
+    const [inv, profile, payments] = await Promise.all([
       getInvoice({ data: { id: params.invoiceId } }),
       getCompanyProfile(),
+      listPayments({ data: { invoiceId: params.invoiceId } }),
     ])
-    return { invoice: inv, profile }
+    return { invoice: inv, profile, payments }
   },
   component: InvoiceViewPage,
   notFoundComponent: InvoiceNotFound,
@@ -64,16 +67,42 @@ function formatDate(date: string | Date): string {
   })
 }
 
+function formatRelative(date: Date): string {
+  const now = Date.now()
+  const t = date.getTime()
+  const diffMs = now - t
+  const mins = Math.round(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`
+  const hours = Math.round(mins / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  const days = Math.round(hours / 24)
+  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`
+  return formatDate(date)
+}
+
 function InvoiceViewPage() {
-  const { invoice: inv, profile } = Route.useLoaderData()
+  const { invoice: inv, profile, payments } = Route.useLoaderData()
   const router = useRouter()
   const navigate = useNavigate()
   const [showDelete, setShowDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null)
+  const [showRecordPayment, setShowRecordPayment] = useState(false)
 
   if (!inv) return <InvoiceNotFound />
 
   const currency = profile.defaultCurrency || 'USD'
+  const fmt = (cents: bigint) => formatMoney(cents, currency)
+
+  const paidCents = payments.reduce(
+    (sum, p) => sum + p.amountCents,
+    0n,
+  )
+  const balanceDueCents = inv.totalCents - paidCents
+  const isFullyPaid = paidCents >= inv.totalCents && inv.totalCents > 0n
+  const isPartiallyPaid =
+    paidCents > 0n && paidCents < inv.totalCents
 
   async function handleDelete() {
     if (!inv) return
@@ -102,23 +131,37 @@ function InvoiceViewPage() {
     }
   }
 
+  async function handleDeletePayment(id: string) {
+    try {
+      await deletePayment({ data: { id } })
+      toast.success('Payment removed')
+      setDeletePaymentId(null)
+      await router.invalidate()
+    } catch {
+      toast.error('Could not remove payment.')
+    }
+  }
+
   return (
     <div className="print:p-0">
-      <div className="flex items-center justify-between print:hidden">
+      <div className="flex items-start justify-between gap-6 print:hidden">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="font-serif text-3xl font-normal tracking-tight">
               {inv.number}
             </h1>
             <span className={`status-pill ${STATUS_STYLES[inv.status]}`}>
               {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
             </span>
+            {isPartiallyPaid && (
+              <span className="status-pill status-overdue">Partially paid</span>
+            )}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {inv.client?.name}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Select value={inv.status} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-32">
               <SelectValue
@@ -163,126 +206,273 @@ function InvoiceViewPage() {
             <Printer className="size-4" />
             Print
           </Button>
+          {balanceDueCents > 0n && (
+            <Button onClick={() => setShowRecordPayment(true)}>
+              <Plus className="size-4" />
+              Record payment
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="mt-8 space-y-8">
-        <div className="grid grid-cols-2 gap-8">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">
-              From
-            </h3>
-            <div className="mt-1 text-sm">
-              <p className="font-medium">{profile.businessName || '—'}</p>
-              {profile.address && <p>{profile.address}</p>}
-              {(profile.city || profile.postcode) && (
-                <p>
-                  {[profile.city, profile.postcode].filter(Boolean).join(', ')}
-                </p>
-              )}
-              {profile.country && <p>{profile.country}</p>}
-              {profile.email && <p>{profile.email}</p>}
-              {profile.taxId && <p>Tax ID: {profile.taxId}</p>}
+      <div className="mt-8 grid grid-cols-[1fr_260px] gap-8 print:block">
+        {/* Doc column */}
+        <div className="space-y-8">
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+                From
+              </h3>
+              <div className="mt-1 text-sm">
+                <p className="font-medium">{profile.businessName || '—'}</p>
+                {profile.address && <p>{profile.address}</p>}
+                {(profile.city || profile.postcode) && (
+                  <p>
+                    {[profile.city, profile.postcode].filter(Boolean).join(', ')}
+                  </p>
+                )}
+                {profile.country && <p>{profile.country}</p>}
+                {profile.email && <p>{profile.email}</p>}
+                {profile.taxId && <p>Tax ID: {profile.taxId}</p>}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+                Bill to
+              </h3>
+              <div className="mt-1 text-sm">
+                <p className="font-medium">{inv.client?.name || '—'}</p>
+                {inv.client?.address && <p>{inv.client.address}</p>}
+                {(inv.client?.city || inv.client?.postcode) && (
+                  <p>
+                    {[inv.client.city, inv.client.postcode]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </p>
+                )}
+                {inv.client?.country && <p>{inv.client.country}</p>}
+                {inv.client?.email && <p>{inv.client.email}</p>}
+              </div>
             </div>
           </div>
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Bill to
-            </h3>
-            <div className="mt-1 text-sm">
-              <p className="font-medium">{inv.client?.name || '—'}</p>
-              {inv.client?.address && <p>{inv.client.address}</p>}
-              {(inv.client?.city || inv.client?.postcode) && (
-                <p>
-                  {[inv.client.city, inv.client.postcode]
-                    .filter(Boolean)
-                    .join(', ')}
-                </p>
-              )}
-              {inv.client?.country && <p>{inv.client.country}</p>}
-              {inv.client?.email && <p>{inv.client.email}</p>}
+
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Issue date</span>
+              <p className="font-medium">{formatDate(inv.issueDate)}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Due date</span>
+              <p className="font-medium">{formatDate(inv.dueDate)}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Invoice number</span>
+              <p className="font-medium">{inv.number}</p>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
-            <span className="text-muted-foreground">Issue date</span>
-            <p className="font-medium">{formatDate(inv.issueDate)}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Due date</span>
-            <p className="font-medium">{formatDate(inv.dueDate)}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Invoice number</span>
-            <p className="font-medium">{inv.number}</p>
-          </div>
-        </div>
-
-        <div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
-                <TableHead className="text-right">Unit price</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inv.lineItems.map((li) => (
-                <TableRow key={li.id}>
-                  <TableCell>{li.description}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {li.quantity}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatMoney(li.unitPriceCents, currency)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatMoney(li.lineTotalCents, currency)}
-                  </TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Qty</TableHead>
+                  <TableHead className="text-right">Unit price</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inv.lineItems.map((li) => (
+                  <TableRow key={li.id}>
+                    <TableCell>{li.description}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {li.quantity}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmt(li.unitPriceCents)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmt(li.lineTotalCents)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex justify-end">
+            <div className="w-72 space-y-2.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="tabular-nums font-serif text-[14px]">
+                  {fmt(inv.subtotalCents)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Tax{Number(inv.taxRate) > 0 ? ` ${inv.taxRate}%` : ''}
+                </span>
+                <span className="tabular-nums font-serif text-[14px]">
+                  {fmt(inv.taxCents)}
+                </span>
+              </div>
+              <div className="flex justify-between border-t border-foreground pt-2.5">
+                <span className="text-[14px] font-semibold">Total</span>
+                <span className="tabular-nums font-serif text-[24px] tracking-tight">
+                  {fmt(inv.totalCents)}
+                </span>
+              </div>
+              {paidCents > 0n && (
+                <>
+                  <div className="flex justify-between border-t border-border pt-2.5">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <span
+                        className="inline-block size-1.5 rounded-full"
+                        style={{ background: 'var(--color-status-paid)' }}
+                      />
+                      Paid
+                    </span>
+                    <span
+                      className="tabular-nums font-serif text-[14px]"
+                      style={{ color: 'var(--color-status-paid)' }}
+                    >
+                      −{fmt(paidCents)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[14px] font-semibold">
+                      Balance due
+                    </span>
+                    <span className="tabular-nums font-serif text-[24px] tracking-tight">
+                      {fmt(balanceDueCents)}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Payments received */}
+          <div className="rounded-md border border-border bg-card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+                  Payments received
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {payments.length === 0
+                    ? 'None recorded'
+                    : `${payments.length} payment${payments.length === 1 ? '' : 's'} · ${fmt(paidCents)} of ${fmt(inv.totalCents)}`}
+                </p>
+              </div>
+              {balanceDueCents > 0n && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[var(--color-accent)]"
+                  onClick={() => setShowRecordPayment(true)}
+                >
+                  <Plus className="size-3.5" />
+                  Record payment
+                </Button>
+              )}
+            </div>
+
+            {payments.length > 0 && (
+              <div className="mt-4 divide-y divide-border">
+                <div className="grid grid-cols-[110px_1fr_120px_32px] gap-4 pb-2 text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+                  <span>Date</span>
+                  <span>Method / Reference</span>
+                  <span className="text-right">Amount</span>
+                  <span />
+                </div>
+                {payments.map((p) => (
+                  <div
+                    key={p.id}
+                    className="grid grid-cols-[110px_1fr_120px_32px] items-center gap-4 py-3 text-sm"
+                  >
+                    <span>{formatDate(p.paidAt)}</span>
+                    <div>
+                      <p className="text-foreground">{p.method || '—'}</p>
+                      {(p.reference || p.notes) && (
+                        <p className="text-xs text-muted-foreground">
+                          {[p.reference, p.notes].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-right tabular-nums font-serif">
+                      {fmt(p.amountCents)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDeletePaymentId(p.id)}
+                      className="ml-auto text-muted-foreground hover:text-destructive"
+                      aria-label="Remove payment"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {isFullyPaid && (
+              <p
+                className="mt-3 text-xs"
+                style={{ color: 'var(--color-status-paid)' }}
+              >
+                ● Invoice fully paid.
+              </p>
+            )}
+          </div>
+
+          {inv.notes && (
+            <div>
+              <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+                Notes
+              </h3>
+              <p className="mt-1 whitespace-pre-wrap text-sm">{inv.notes}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Activity sidebar */}
+        <aside className="space-y-3 print:hidden">
+          <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+            Activity
+          </h3>
+          <div className="border-t border-border pt-4">
+            <ul className="relative space-y-4 pl-4">
+              <span
+                aria-hidden
+                className="absolute top-2 bottom-2 left-[3px] w-px bg-border"
+              />
+              {buildActivity(inv, payments, fmt).map((event, i) => (
+                <li key={i} className="relative">
+                  <span
+                    aria-hidden
+                    className="absolute -left-4 top-1.5 size-1.5 rounded-full bg-foreground"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    {formatRelative(event.at)}
+                  </p>
+                  <p className="text-[13px] text-foreground">{event.label}</p>
+                </li>
               ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="flex justify-end">
-          <div className="w-64 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="tabular-nums">
-                {formatMoney(inv.subtotalCents, currency)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                Tax{Number(inv.taxRate) > 0 ? ` ${inv.taxRate}%` : ''}
-              </span>
-              <span className="tabular-nums">
-                {formatMoney(inv.taxCents, currency)}
-              </span>
-            </div>
-            <div className="flex justify-between border-t pt-2 text-base font-semibold">
-              <span>Total</span>
-              <span className="tabular-nums">
-                {formatMoney(inv.totalCents, currency)}
-              </span>
-            </div>
+            </ul>
           </div>
-        </div>
-
-        {inv.notes && (
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Notes
-            </h3>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{inv.notes}</p>
-          </div>
-        )}
+        </aside>
       </div>
+
+      <RecordPaymentDialog
+        invoiceId={inv.id}
+        invoiceNumber={inv.number}
+        clientName={inv.client?.name ?? null}
+        balanceDueCents={balanceDueCents}
+        formatCents={fmt}
+        open={showRecordPayment}
+        onOpenChange={setShowRecordPayment}
+      />
 
       <Dialog
         open={showDelete}
@@ -314,8 +504,75 @@ function InvoiceViewPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={!!deletePaymentId}
+        onOpenChange={(open) => !open && setDeletePaymentId(null)}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Remove payment?</DialogTitle>
+            <DialogDescription>
+              This will remove the payment record permanently. The invoice
+              balance will be recalculated.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeletePaymentId(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deletePaymentId && handleDeletePayment(deletePaymentId)}
+            >
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
+}
+
+type Activity = { at: Date; label: string }
+
+function buildActivity(
+  inv: { createdAt: Date | string; status: InvoiceStatus },
+  payments: Array<{
+    id: string
+    paidAt: Date | string
+    amountCents: bigint
+    method: string
+  }>,
+  fmt: (cents: bigint) => string,
+): Activity[] {
+  const events: Activity[] = []
+  events.push({
+    at: new Date(inv.createdAt),
+    label: 'Invoice created',
+  })
+  for (const p of payments) {
+    events.push({
+      at: new Date(p.paidAt),
+      label: `Payment recorded · ${fmt(p.amountCents)}${p.method ? ` (${p.method})` : ''}`,
+    })
+  }
+  if (inv.status === 'paid') {
+    events.push({
+      at: new Date(),
+      label: 'Marked as paid',
+    })
+  } else if (inv.status === 'void') {
+    events.push({
+      at: new Date(),
+      label: 'Voided',
+    })
+  }
+  // newest first
+  return events.sort((a, b) => b.at.getTime() - a.at.getTime())
 }
 
 function InvoiceNotFound() {
