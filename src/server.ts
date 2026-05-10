@@ -13,9 +13,9 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 // Production CSP. TanStack Start ships an inline `<script type="module">`
 // that bootstraps hydration, so 'unsafe-inline' on script-src is required
-// here without a nonce/hashes scheme. style-src + font-src allow the
-// Google Fonts CDN used by src/styles.css. connect-src 'self' covers
-// same-origin server-fn POSTs.
+// here without a nonce/hashes scheme. Fonts are self-hosted (Fontsource)
+// so style-src/font-src don't need third-party allowances. connect-src
+// 'self' covers same-origin server-fn POSTs.
 //
 // In dev, Vite/HMR uses inline modules, dynamic imports, eval, and a
 // websocket — we skip CSP entirely so the dev experience isn't crippled.
@@ -23,8 +23,8 @@ const SECURITY_HEADERS: Record<string, string> = {
 const CSP = [
   "default-src 'self'",
   "img-src 'self' data:",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "connect-src 'self'",
 ].join('; ')
