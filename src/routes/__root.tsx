@@ -31,7 +31,7 @@ function NotFound() {
         The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
       <Button asChild className="mt-6">
-        <Link to="/">Back to invoices</Link>
+        <Link to="/">Back to dashboard</Link>
       </Button>
     </div>
   )
