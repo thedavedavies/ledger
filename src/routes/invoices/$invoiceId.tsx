@@ -3,6 +3,7 @@ import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-r
 import { toast } from 'sonner'
 import { Download, Plus, Printer, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { IconButton } from '#/components/ui/icon-button'
 import {
   Dialog,
   DialogContent,
@@ -391,14 +392,16 @@ function InvoiceViewPage() {
                     <span className="text-right tabular-nums font-serif">
                       {fmt(p.amountCents)}
                     </span>
-                    <button
+                    <IconButton
                       type="button"
+                      variant="ghost"
+                      size="sm"
+                      label="Remove payment"
                       onClick={() => setDeletePaymentId(p.id)}
-                      className="ml-auto text-muted-foreground hover:text-destructive"
-                      aria-label="Remove payment"
+                      className="ml-auto h-8 w-8 cursor-pointer p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
                       <X className="size-4" />
-                    </button>
+                    </IconButton>
                   </div>
                 ))}
               </div>
