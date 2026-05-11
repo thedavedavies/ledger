@@ -1,6 +1,24 @@
 import { z } from 'zod'
 import { CURRENCY_CODES } from './currency'
 
+/**
+ * Canonical payment methods offered in the Record payment dialog.  The DB
+ * column is plain text so historical or imported rows can hold anything, but
+ * the UI is constrained to this list to keep activity feeds and reporting
+ * tidy.
+ */
+export const PAYMENT_METHODS = [
+  'Bank transfer',
+  'Card',
+  'Cash',
+  'Cheque',
+  'PayPal',
+  'Stripe',
+  'Other',
+] as const
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
+
 export const companyProfileInput = z.object({
   businessName: z
     .string()

@@ -12,10 +12,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
+import { FormField } from '#/components/ui/form-field'
 import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
-import { paymentInput, type PaymentInput } from '#/lib/validators'
+import { toCents } from '#/lib/money'
+import {
+  PAYMENT_METHODS,
+  paymentInput,
+  type PaymentInput,
+} from '#/lib/validators'
 import { createPayment } from '#/server/payments.fn'
 
 interface Props {
@@ -55,7 +67,7 @@ export function RecordPaymentDialog({
       invoiceId,
       amount: defaultAmount(balanceDueCents),
       paidAt: todayIso(),
-      method: '',
+      method: 'Bank transfer',
       reference: '',
       notes: '',
     } satisfies PaymentInput,
@@ -110,87 +122,109 @@ export function RecordPaymentDialog({
           <div className="grid grid-cols-2 gap-4">
             <form.Field name="paidAt">
               {(field) => (
-                <Field
+                <FormField
                   label="Date"
                   error={field.state.meta.errorMap.onChange}
                 >
-                  <Input
-                    type="date"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
-                </Field>
+                  {(props) => (
+                    <Input
+                      {...props}
+                      type="date"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  )}
+                </FormField>
               )}
             </form.Field>
 
             <form.Field name="amount">
               {(field) => (
-                <Field
+                <FormField
                   label="Amount"
                   trailing={`Balance ${formatCents(balanceDueCents)}`}
                   error={field.state.meta.errorMap.onChange}
                 >
-                  <Input
-                    inputMode="decimal"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </Field>
+                  {(props) => (
+                    <Input
+                      {...props}
+                      inputMode="decimal"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="0.00"
+                    />
+                  )}
+                </FormField>
               )}
             </form.Field>
           </div>
 
           <form.Field name="method">
             {(field) => (
-              <Field
+              <FormField
                 label="Method"
-                trailing="Optional"
                 error={field.state.meta.errorMap.onChange}
               >
-                <Input
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="e.g. Bank transfer, Cheque, Cash"
-                />
-              </Field>
+                {(props) => (
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(v) => field.handleChange(v)}
+                  >
+                    <SelectTrigger {...props} className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method} value={method}>
+                          {method}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </FormField>
             )}
           </form.Field>
 
           <form.Field name="reference">
             {(field) => (
-              <Field
+              <FormField
                 label="Reference"
                 trailing="Optional"
                 error={field.state.meta.errorMap.onChange}
               >
-                <Input
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="e.g. BAC-7741"
-                />
-              </Field>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="e.g. BAC-7741"
+                  />
+                )}
+              </FormField>
             )}
           </form.Field>
 
           <form.Field name="notes">
             {(field) => (
-              <Field
+              <FormField
                 label="Notes"
                 trailing="Optional"
                 error={field.state.meta.errorMap.onChange}
               >
-                <Textarea
-                  rows={3}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              </Field>
+                {(props) => (
+                  <Textarea
+                    {...props}
+                    rows={3}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                )}
+              </FormField>
             )}
           </form.Field>
 
@@ -204,12 +238,15 @@ export function RecordPaymentDialog({
               Cancel
             </Button>
             <form.Subscribe selector={(s) => s.values.amount}>
-              {(amount) => (
-                <Button type="submit" disabled={submitting}>
-                  {submitting && <Loader2 className="size-4 animate-spin" />}
-                  Record{amount ? ` ${formatAmount(amount)}` : ''}
-                </Button>
-              )}
+              {(amount) => {
+                const formatted = formatRecordAmount(amount, formatCents)
+                return (
+                  <Button type="submit" disabled={submitting}>
+                    {submitting && <Loader2 className="size-4 animate-spin" />}
+                    Record{formatted ? ` ${formatted}` : ''}
+                  </Button>
+                )
+              }}
             </form.Subscribe>
           </DialogFooter>
         </form>
@@ -218,38 +255,16 @@ export function RecordPaymentDialog({
   )
 }
 
-function formatAmount(amount: string) {
+function formatRecordAmount(
+  amount: string,
+  formatCents: (cents: bigint) => string,
+): string {
   const n = Number(amount)
   if (!isFinite(n) || n <= 0) return ''
-  // Currency-symbol-less rendering — the dialog header already says invoice; user
-  // sees the actual currency on the invoice itself.
-  return n.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+  try {
+    return formatCents(toCents(amount))
+  } catch {
+    return ''
+  }
 }
 
-function Field({
-  label,
-  trailing,
-  error,
-  children,
-}: {
-  label: string
-  trailing?: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <Label>{label}</Label>
-        {trailing && (
-          <span className="text-[11px] text-muted-foreground">{trailing}</span>
-        )}
-      </div>
-      {children}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
-  )
-}
