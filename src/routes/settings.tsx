@@ -3,8 +3,8 @@ import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { FormField } from '#/components/ui/form-field'
 import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -84,12 +84,15 @@ function SettingsPage() {
             <form.Field name="businessName">
               {(field) => (
                 <FormField label="Business name" error={field.state.meta.errorMap.onChange}>
-                  <Input
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Acme Inc."
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Acme Inc."
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -97,12 +100,15 @@ function SettingsPage() {
             <form.Field name="address">
               {(field) => (
                 <FormField label="Address" error={field.state.meta.errorMap.onChange}>
-                  <Input
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="123 Main St"
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="123 Main St"
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -111,11 +117,14 @@ function SettingsPage() {
               <form.Field name="city">
                 {(field) => (
                   <FormField label="City" error={field.state.meta.errorMap.onChange}>
-                    <Input
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
+                    {(props) => (
+                      <Input
+                        {...props}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                    )}
                   </FormField>
                 )}
               </form.Field>
@@ -123,11 +132,14 @@ function SettingsPage() {
               <form.Field name="postcode">
                 {(field) => (
                   <FormField label="Postcode" error={field.state.meta.errorMap.onChange}>
-                    <Input
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
+                    {(props) => (
+                      <Input
+                        {...props}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                    )}
                   </FormField>
                 )}
               </form.Field>
@@ -135,11 +147,14 @@ function SettingsPage() {
               <form.Field name="country">
                 {(field) => (
                   <FormField label="Country" error={field.state.meta.errorMap.onChange}>
-                    <Input
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
+                    {(props) => (
+                      <Input
+                        {...props}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                    )}
                   </FormField>
                 )}
               </form.Field>
@@ -149,13 +164,16 @@ function SettingsPage() {
               <form.Field name="email">
                 {(field) => (
                   <FormField label="Email" error={field.state.meta.errorMap.onChange}>
-                    <Input
-                      type="email"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="billing@example.com"
-                    />
+                    {(props) => (
+                      <Input
+                        {...props}
+                        type="email"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="billing@example.com"
+                      />
+                    )}
                   </FormField>
                 )}
               </form.Field>
@@ -163,11 +181,14 @@ function SettingsPage() {
               <form.Field name="phone">
                 {(field) => (
                   <FormField label="Phone" error={field.state.meta.errorMap.onChange}>
-                    <Input
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
+                    {(props) => (
+                      <Input
+                        {...props}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                    )}
                   </FormField>
                 )}
               </form.Field>
@@ -176,11 +197,14 @@ function SettingsPage() {
             <form.Field name="taxId">
               {(field) => (
                 <FormField label="Tax ID" error={field.state.meta.errorMap.onChange}>
-                  <Input
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -197,21 +221,23 @@ function SettingsPage() {
             <form.Field name="defaultCurrency">
               {(field) => (
                 <FormField label="Default currency" error={field.state.meta.errorMap.onChange}>
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(v) => field.handleChange(v)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>
-                          {c.code} — {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {(props) => (
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(v) => field.handleChange(v)}
+                    >
+                      <SelectTrigger {...props} className="w-full">
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CURRENCIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.code} — {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -219,15 +245,18 @@ function SettingsPage() {
             <form.Field name="taxRate">
               {(field) => (
                 <FormField label="Default tax rate (%)" error={field.state.meta.errorMap.onChange}>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="0"
-                    className="max-w-32"
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      type="text"
+                      inputMode="decimal"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="0"
+                      className="max-w-32"
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -235,13 +264,16 @@ function SettingsPage() {
             <form.Field name="invoicePrefix">
               {(field) => (
                 <FormField label="Invoice number prefix" error={field.state.meta.errorMap.onChange}>
-                  <Input
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="INV"
-                    className="max-w-40"
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="INV"
+                      className="max-w-40"
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -263,20 +295,3 @@ function SettingsPage() {
   )
 }
 
-function FormField({
-  label,
-  error,
-  children,
-}: {
-  label: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {children}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
-  )
-}

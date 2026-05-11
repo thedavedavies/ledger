@@ -1,8 +1,8 @@
 import { useForm } from '@tanstack/react-form'
 import { Loader2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { FormField } from '#/components/ui/form-field'
 import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
 import { Textarea } from '#/components/ui/textarea'
 import { clientInput, type ClientInput } from '#/lib/validators'
 
@@ -51,12 +51,15 @@ export function ClientForm({
               label="Contact name"
               error={field.state.meta.errorMap.onChange}
             >
-              <Input
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="Jane Doe"
-              />
+              {(props) => (
+                <Input
+                  {...props}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Jane Doe"
+                />
+              )}
             </FormField>
           )}
         </form.Field>
@@ -67,12 +70,15 @@ export function ClientForm({
               label="Company name"
               error={field.state.meta.errorMap.onChange}
             >
-              <Input
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="Acme Inc."
-              />
+              {(props) => (
+                <Input
+                  {...props}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Acme Inc."
+                />
+              )}
             </FormField>
           )}
         </form.Field>
@@ -83,13 +89,16 @@ export function ClientForm({
               label="Email"
               error={field.state.meta.errorMap.onChange}
             >
-              <Input
-                type="email"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="billing@example.com"
-              />
+              {(props) => (
+                <Input
+                  {...props}
+                  type="email"
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="billing@example.com"
+                />
+              )}
             </FormField>
           )}
         </form.Field>
@@ -100,12 +109,15 @@ export function ClientForm({
               label="Address"
               error={field.state.meta.errorMap.onChange}
             >
-              <Input
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="123 Main St"
-              />
+              {(props) => (
+                <Input
+                  {...props}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="123 Main St"
+                />
+              )}
             </FormField>
           )}
         </form.Field>
@@ -117,11 +129,14 @@ export function ClientForm({
                 label="City"
                 error={field.state.meta.errorMap.onChange}
               >
-                <Input
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                )}
               </FormField>
             )}
           </form.Field>
@@ -132,11 +147,14 @@ export function ClientForm({
                 label="Postcode"
                 error={field.state.meta.errorMap.onChange}
               >
-                <Input
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                )}
               </FormField>
             )}
           </form.Field>
@@ -147,11 +165,14 @@ export function ClientForm({
                 label="Country"
                 error={field.state.meta.errorMap.onChange}
               >
-                <Input
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                )}
               </FormField>
             )}
           </form.Field>
@@ -163,11 +184,14 @@ export function ClientForm({
               label="Phone"
               error={field.state.meta.errorMap.onChange}
             >
-              <Input
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
+              {(props) => (
+                <Input
+                  {...props}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              )}
             </FormField>
           )}
         </form.Field>
@@ -178,13 +202,16 @@ export function ClientForm({
               label="Notes"
               error={field.state.meta.errorMap.onChange}
             >
-              <Textarea
-                rows={4}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="Net 30 terms, PO number required, etc."
-              />
+              {(props) => (
+                <Textarea
+                  {...props}
+                  rows={4}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Net 30 terms, PO number required, etc."
+                />
+              )}
             </FormField>
           )}
         </form.Field>
@@ -204,20 +231,3 @@ export function ClientForm({
   )
 }
 
-function FormField({
-  label,
-  error,
-  children,
-}: {
-  label: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {children}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
-  )
-}

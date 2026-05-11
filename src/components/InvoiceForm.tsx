@@ -2,8 +2,8 @@ import { useRef } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { FormField } from '#/components/ui/form-field'
 import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -121,21 +121,23 @@ export function InvoiceForm({
                   label="Client"
                   error={field.state.meta.errorMap.onChange}
                 >
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(v) => field.handleChange(v)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {(props) => (
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(v) => field.handleChange(v)}
+                    >
+                      <SelectTrigger {...props} className="w-full">
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -151,12 +153,15 @@ export function InvoiceForm({
                   label="Issue date"
                   error={field.state.meta.errorMap.onChange}
                 >
-                  <Input
-                    type="date"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      type="date"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -167,12 +172,15 @@ export function InvoiceForm({
                   label="Due date"
                   error={field.state.meta.errorMap.onChange}
                 >
-                  <Input
-                    type="date"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      type="date"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -391,15 +399,18 @@ export function InvoiceForm({
                   label="Tax rate (%)"
                   error={field.state.meta.errorMap.onChange}
                 >
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="0"
-                    className="max-w-32"
-                  />
+                  {(props) => (
+                    <Input
+                      {...props}
+                      type="text"
+                      inputMode="decimal"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="0"
+                      className="max-w-32"
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -410,14 +421,17 @@ export function InvoiceForm({
                   label="Notes"
                   error={field.state.meta.errorMap.onChange}
                 >
-                  <textarea
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Payment terms, bank details, or additional notes..."
-                    rows={3}
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
+                  {(props) => (
+                    <textarea
+                      {...props}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Payment terms, bank details, or additional notes..."
+                      rows={3}
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                  )}
                 </FormField>
               )}
             </form.Field>
@@ -439,20 +453,3 @@ export function InvoiceForm({
   )
 }
 
-function FormField({
-  label,
-  error,
-  children,
-}: {
-  label: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {children}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
-  )
-}
