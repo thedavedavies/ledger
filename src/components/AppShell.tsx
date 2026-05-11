@@ -2,7 +2,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', match: (p: string) => p === '/' },
-  { to: '/', label: 'Invoices', match: (p: string) => p.startsWith('/invoices') },
+  { to: '/invoices', label: 'Invoices', match: (p: string) => p.startsWith('/invoices') },
   { to: '/clients', label: 'Clients', match: (p: string) => p.startsWith('/clients') },
   { to: '/settings', label: 'Settings', match: (p: string) => p.startsWith('/settings') },
 ] as const

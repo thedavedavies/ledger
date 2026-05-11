@@ -1,16 +1,6 @@
-import { useState } from 'react'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
-import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { ArrowDownRight, ArrowUpRight, Plus } from 'lucide-react'
 import { Button } from '#/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '#/components/ui/dialog'
 import {
   Table,
   TableBody,
@@ -19,36 +9,22 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { MonthlyBarChart } from '#/components/dashboard/MonthlyBarChart'
+import { percentChange } from '#/lib/dashboard'
 import { formatMoney } from '#/lib/money'
+import { getDashboardData } from '#/server/dashboard.fn'
 import { getCompanyProfile } from '#/server/settings.fn'
-import { deleteInvoice, listInvoices } from '#/server/invoices.fn'
-import type { InvoiceStatus } from '#/server/schema'
 
 export const Route = createFileRoute('/')({
   loader: async () => {
-    const [invoices, profile] = await Promise.all([
-      listInvoices(),
+    const [data, profile] = await Promise.all([
+      getDashboardData(),
       getCompanyProfile(),
     ])
-    return { invoices, profile }
+    return { data, profile }
   },
-  component: HomePage,
+  component: DashboardPage,
 })
-
-const STATUS_STYLES: Record<InvoiceStatus, string> = {
-  draft: 'status-draft',
-  sent: 'status-sent',
-  paid: 'status-paid',
-  void: 'status-void',
-}
-
-function StatusBadge({ status }: { status: InvoiceStatus }) {
-  return (
-    <span className={`status-pill ${STATUS_STYLES[status]}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  )
-}
 
 function formatDate(date: string | Date): string {
   return new Date(date).toLocaleDateString('en-US', {
@@ -58,32 +34,77 @@ function formatDate(date: string | Date): string {
   })
 }
 
-function HomePage() {
-  const { invoices, profile } = Route.useLoaderData()
-  const router = useRouter()
+function DeltaLabel({
+  current,
+  prev,
+  monthLabel,
+}: {
+  current: bigint
+  prev: bigint
+  monthLabel: string
+}) {
+  const pct = percentChange(current, prev)
+  if (pct === null) {
+    return (
+      <span className="text-muted-foreground">No activity in {monthLabel}</span>
+    )
+  }
+  const isUp = pct > 0
+  const isFlat = pct === 0
+  const Icon = isUp ? ArrowUpRight : ArrowDownRight
+  const sign = isUp ? '+' : ''
+  return (
+    <span className="inline-flex items-center gap-1 text-muted-foreground">
+      {!isFlat && <Icon className="size-3" aria-hidden="true" />}
+      <span>
+        {sign}
+        {pct.toFixed(1)}% vs {monthLabel}
+      </span>
+    </span>
+  )
+}
+
+function KpiCard({
+  label,
+  value,
+  children,
+}: {
+  label: string
+  value: string
+  children?: React.ReactNode
+}) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 font-serif text-[40px] leading-none tracking-tight tabular-nums">
+        {value}
+      </p>
+      {children && <p className="mt-2 text-xs">{children}</p>}
+    </div>
+  )
+}
+
+function DashboardPage() {
+  const { data, profile } = Route.useLoaderData()
   const needsSetup = !profile.businessName
   const currency = profile.defaultCurrency || 'USD'
 
-  const [deleteTarget, setDeleteTarget] = useState<{
-    id: string
-    number: string
-  } | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const fmt = (cents: bigint) => formatMoney(cents, currency)
 
-  async function handleDelete() {
-    if (!deleteTarget) return
-    setDeleting(true)
-    try {
-      await deleteInvoice({ data: { id: deleteTarget.id } })
-      toast.success('Invoice deleted')
-      setDeleteTarget(null)
-      await router.invalidate()
-    } catch {
-      toast.error('Something went wrong. Please try again.')
-    } finally {
-      setDeleting(false)
-    }
-  }
+  const fmtAxis = (cents: bigint) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).format(Number(cents) / 100)
+
+  const prevMonthLabel = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() - 1,
+    1,
+  ).toLocaleDateString('en-US', { month: 'long' })
 
   return (
     <div>
@@ -97,128 +118,133 @@ function HomePage() {
       )}
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Invoices</h1>
-        {invoices.length > 0 && (
-          <Button asChild>
-            <Link to="/invoices/new">
-              <Plus className="size-4" />
-              New invoice
-            </Link>
-          </Button>
-        )}
+        <h1 className="text-3xl font-normal tracking-tight">Dashboard</h1>
+        <Button asChild>
+          <Link to="/invoices/new">
+            <Plus className="size-4" />
+            New invoice
+          </Link>
+        </Button>
       </div>
 
-      {invoices.length === 0 ? (
-        <div className="mt-16 flex flex-col items-center justify-center text-center">
-          <p className="text-muted-foreground">No invoices yet</p>
-          <Button asChild className="mt-4">
-            <Link to="/invoices/new">
-              <Plus className="size-4" />
-              New invoice
-            </Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="mt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Number</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Issued</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((inv) => (
-                <TableRow
-                  key={inv.id}
-                  className={inv.status === 'void' ? 'line-through opacity-60' : ''}
-                >
-                  <TableCell className="font-medium">
-                    <Link
-                      to="/invoices/$invoiceId"
-                      params={{ invoiceId: inv.id }}
-                      className="hover:underline"
-                    >
-                      {inv.number}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{inv.clientName}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(inv.issueDate)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(inv.dueDate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatMoney(inv.totalCents, currency)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={inv.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link
-                          to="/invoices/$invoiceId"
-                          params={{ invoiceId: inv.id }}
-                        >
-                          View
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() =>
-                          setDeleteTarget({ id: inv.id, number: inv.number })
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      <Dialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      <section
+        aria-label="Monthly summary"
+        className="mt-8 grid grid-cols-3 gap-10 border-b border-border pb-10"
       >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>Delete invoice {deleteTarget?.number}?</DialogTitle>
-            <DialogDescription>
-              This will remove the invoice and all line items permanently. This
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteTarget(null)}
-              disabled={deleting}
+        <KpiCard
+          label="Invoiced this month"
+          value={fmt(data.kpi.invoicedThisMonthCents)}
+        >
+          <DeltaLabel
+            current={data.kpi.invoicedThisMonthCents}
+            prev={data.kpi.invoicedLastMonthCents}
+            monthLabel={prevMonthLabel}
+          />
+        </KpiCard>
+        <KpiCard
+          label="Paid this month"
+          value={fmt(data.kpi.paidThisMonthCents)}
+        >
+          <DeltaLabel
+            current={data.kpi.paidThisMonthCents}
+            prev={data.kpi.paidLastMonthCents}
+            monthLabel={prevMonthLabel}
+          />
+        </KpiCard>
+        <KpiCard label="Outstanding" value={fmt(data.kpi.outstandingCents)}>
+          {data.kpi.overdueCents > 0n ? (
+            <span className="text-muted-foreground">
+              of which{' '}
+              <span style={{ color: 'var(--color-status-overdue)' }}>
+                {fmt(data.kpi.overdueCents)} overdue
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Nothing overdue</span>
+          )}
+        </KpiCard>
+      </section>
+
+      <section className="mt-10">
+        <MonthlyBarChart
+          caption="Last 12 months"
+          data={data.series}
+          formatAxis={fmtAxis}
+          formatTooltip={fmt}
+        />
+      </section>
+
+      <section className="mt-12">
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-xl font-normal tracking-tight">
+              Outstanding invoices
+            </h2>
+            {data.outstandingCount > data.outstanding.length && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Showing {data.outstanding.length} of {data.outstandingCount}
+              </p>
+            )}
+          </div>
+          {data.outstandingCount > 0 && (
+            <Link
+              to="/invoices"
+              className="text-sm text-[var(--color-accent)] hover:underline"
             >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? 'Deleting…' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              View all
+            </Link>
+          )}
+        </div>
+
+        {data.outstanding.length === 0 ? (
+          <p className="mt-6 text-sm text-muted-foreground">
+            Nothing outstanding. Every sent invoice has been paid.
+          </p>
+        ) : (
+          <div className="mt-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Due</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.outstanding.map((inv) => (
+                  <TableRow key={inv.id}>
+                    <TableCell className="font-medium">
+                      <Link
+                        to="/invoices/$invoiceId"
+                        params={{ invoiceId: inv.id }}
+                        className="hover:underline"
+                      >
+                        {inv.number}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{inv.clientName}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDate(inv.dueDate)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmt(inv.balanceCents)}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`status-pill ${inv.isOverdue ? 'status-overdue' : 'status-sent'}`}
+                      >
+                        {inv.isOverdue ? 'Overdue' : 'Sent'}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
