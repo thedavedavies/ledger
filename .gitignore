@@ -88,3 +88,6 @@ desktop.ini
 *.tgz
 .vscode-test
 .history/
+
+# Local agent notes (per-machine, not committed)
+AGENTS.local.md
