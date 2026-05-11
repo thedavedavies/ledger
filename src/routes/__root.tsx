@@ -3,6 +3,7 @@ import appCss from '../styles.css?url'
 import { AppShell } from '#/components/AppShell'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
+import { TooltipProvider } from '#/components/ui/tooltip'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -39,10 +40,12 @@ function NotFound() {
 function RootComponent() {
   return (
     <RootDocument>
-      <AppShell>
-        <Outlet />
-      </AppShell>
-      <Toaster position="bottom-right" />
+      <TooltipProvider>
+        <AppShell>
+          <Outlet />
+        </AppShell>
+        <Toaster position="bottom-right" />
+      </TooltipProvider>
     </RootDocument>
   )
 }
