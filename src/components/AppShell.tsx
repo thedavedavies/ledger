@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="flex w-[220px] shrink-0 flex-col justify-between border-r border-border bg-sidebar pt-7 pr-6 pb-6 pl-6">
+      <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col justify-between border-r border-border bg-sidebar pt-7 pr-6 pb-6 pl-6">
         <div className="flex flex-col gap-9">
           <Link
             to="/"
