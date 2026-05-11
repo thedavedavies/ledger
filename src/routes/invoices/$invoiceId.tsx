@@ -151,7 +151,7 @@ function InvoiceViewPage() {
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Select value={inv.status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-32" aria-label="Invoice status">
               <SelectValue
                 placeholder={
                   inv.status.charAt(0).toUpperCase() + inv.status.slice(1)
@@ -425,7 +425,7 @@ function InvoiceViewPage() {
         </div>
 
         {/* Activity sidebar */}
-        <aside className="space-y-3 print:hidden">
+        <aside aria-label="Activity" className="space-y-3 print:hidden">
           <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
             Activity
           </h3>

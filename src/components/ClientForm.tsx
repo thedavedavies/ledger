@@ -54,6 +54,7 @@ export function ClientForm({
               {(props) => (
                 <Input
                   {...props}
+                  autoComplete="name"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -73,6 +74,7 @@ export function ClientForm({
               {(props) => (
                 <Input
                   {...props}
+                  autoComplete="organization"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -93,6 +95,7 @@ export function ClientForm({
                 <Input
                   {...props}
                   type="email"
+                  autoComplete="email"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -112,6 +115,7 @@ export function ClientForm({
               {(props) => (
                 <Input
                   {...props}
+                  autoComplete="street-address"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -132,6 +136,7 @@ export function ClientForm({
                 {(props) => (
                   <Input
                     {...props}
+                    autoComplete="address-level2"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
@@ -150,6 +155,7 @@ export function ClientForm({
                 {(props) => (
                   <Input
                     {...props}
+                    autoComplete="postal-code"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
@@ -168,6 +174,7 @@ export function ClientForm({
                 {(props) => (
                   <Input
                     {...props}
+                    autoComplete="country-name"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
@@ -187,6 +194,8 @@ export function ClientForm({
               {(props) => (
                 <Input
                   {...props}
+                  type="tel"
+                  autoComplete="tel"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}

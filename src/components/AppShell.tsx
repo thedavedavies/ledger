@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col justify-between border-r border-border bg-sidebar pt-7 pr-6 pb-6 pl-6">
+      <div className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col justify-between border-r border-border bg-sidebar pt-7 pr-6 pb-6 pl-6">
         <div className="flex flex-col gap-9">
           <Link
             to="/"
@@ -27,6 +27,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.label}
                   to={item.to}
+                  aria-current={isActive ? 'page' : undefined}
                   className={`px-2.5 py-2 text-[13px] leading-none transition-colors ${
                     isActive
                       ? 'font-semibold text-foreground'
@@ -51,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="text-[11px] text-muted-foreground">eleanor@whitmore.studio</span>
           </div>
         </div>
-      </aside>
+      </div>
       <main className="flex-1 px-10 py-16">{children}</main>
     </div>
   )
