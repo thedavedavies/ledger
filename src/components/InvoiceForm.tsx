@@ -1,8 +1,9 @@
-import { useRef } from 'react'
+import { useId, useRef } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { FormField } from '#/components/ui/form-field'
+import { IconButton } from '#/components/ui/icon-button'
 import { Input } from '#/components/ui/input'
 import {
   Select,
@@ -75,6 +76,7 @@ export function InvoiceForm({
   submitLabel,
 }: InvoiceFormProps) {
   const descriptionRefs = useRef<Map<number, HTMLInputElement>>(new Map())
+  const lineIdBase = useId()
 
   const form = useForm({
     defaultValues,
@@ -201,7 +203,10 @@ export function InvoiceForm({
                   </p>
                 )}
                 <div className="rounded-lg border">
-                  <div className="grid grid-cols-[1fr_80px_120px_100px_40px] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <div
+                    aria-hidden="true"
+                    className="grid grid-cols-[1fr_80px_120px_100px_40px] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                  >
                     <span>Description</span>
                     <span className="text-right">Qty</span>
                     <span className="text-right">Unit price</span>
@@ -217,70 +222,91 @@ export function InvoiceForm({
                           line.quantity,
                           line.unitPrice,
                         )
+                        const descId = `${lineIdBase}-${i}-description`
+                        const qtyId = `${lineIdBase}-${i}-quantity`
+                        const priceId = `${lineIdBase}-${i}-unit-price`
                         return (
                           <div className="grid grid-cols-[1fr_80px_120px_100px_40px] items-center gap-2 border-b px-3 py-2 last:border-b-0">
                             <form.Field name={`lineItems[${i}].description`}>
                               {(descField) => (
-                                <Input
-                                  ref={(el) => {
-                                    if (el) descriptionRefs.current.set(i, el)
-                                    else descriptionRefs.current.delete(i)
-                                  }}
-                                  value={descField.state.value}
-                                  onBlur={descField.handleBlur}
-                                  onChange={(e) =>
-                                    descField.handleChange(e.target.value)
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') e.preventDefault()
-                                  }}
-                                  placeholder="Description"
-                                  className="h-8 text-sm"
-                                />
+                                <div>
+                                  <label htmlFor={descId} className="sr-only">
+                                    Description for line item {i + 1}
+                                  </label>
+                                  <Input
+                                    id={descId}
+                                    ref={(el) => {
+                                      if (el) descriptionRefs.current.set(i, el)
+                                      else descriptionRefs.current.delete(i)
+                                    }}
+                                    value={descField.state.value}
+                                    onBlur={descField.handleBlur}
+                                    onChange={(e) =>
+                                      descField.handleChange(e.target.value)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.preventDefault()
+                                    }}
+                                    placeholder="Description"
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
                               )}
                             </form.Field>
                             <form.Field name={`lineItems[${i}].quantity`}>
                               {(qtyField) => (
-                                <Input
-                                  value={qtyField.state.value}
-                                  onBlur={qtyField.handleBlur}
-                                  onChange={(e) =>
-                                    qtyField.handleChange(e.target.value)
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') e.preventDefault()
-                                  }}
-                                  placeholder="0"
-                                  inputMode="decimal"
-                                  className="h-8 text-right text-sm"
-                                />
+                                <div>
+                                  <label htmlFor={qtyId} className="sr-only">
+                                    Quantity for line item {i + 1}
+                                  </label>
+                                  <Input
+                                    id={qtyId}
+                                    value={qtyField.state.value}
+                                    onBlur={qtyField.handleBlur}
+                                    onChange={(e) =>
+                                      qtyField.handleChange(e.target.value)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.preventDefault()
+                                    }}
+                                    placeholder="0"
+                                    inputMode="decimal"
+                                    className="h-8 text-right text-sm"
+                                  />
+                                </div>
                               )}
                             </form.Field>
                             <form.Field name={`lineItems[${i}].unitPrice`}>
                               {(priceField) => (
-                                <Input
-                                  value={priceField.state.value}
-                                  onBlur={priceField.handleBlur}
-                                  onChange={(e) =>
-                                    priceField.handleChange(e.target.value)
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') e.preventDefault()
-                                  }}
-                                  placeholder="0.00"
-                                  inputMode="decimal"
-                                  className="h-8 text-right text-sm"
-                                />
+                                <div>
+                                  <label htmlFor={priceId} className="sr-only">
+                                    Unit price for line item {i + 1}
+                                  </label>
+                                  <Input
+                                    id={priceId}
+                                    value={priceField.state.value}
+                                    onBlur={priceField.handleBlur}
+                                    onChange={(e) =>
+                                      priceField.handleChange(e.target.value)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.preventDefault()
+                                    }}
+                                    placeholder="0.00"
+                                    inputMode="decimal"
+                                    className="h-8 text-right text-sm"
+                                  />
+                                </div>
                               )}
                             </form.Field>
                             <div className="text-right text-sm tabular-nums text-muted-foreground">
                               {lineTotal !== null ? lineTotal : '—'}
                             </div>
-                            <Button
+                            <IconButton
                               type="button"
                               variant="ghost"
                               size="sm"
-                              aria-label={`Remove line item ${i + 1}`}
+                              label={`Remove line item ${i + 1}`}
                               aria-disabled={
                                 field.state.value.length <= 1 || undefined
                               }
@@ -296,8 +322,8 @@ export function InvoiceForm({
                                 })
                               }}
                             >
-                              <Trash2 className="size-3.5" aria-hidden={false} />
-                            </Button>
+                              <Trash2 className="size-3.5" />
+                            </IconButton>
                           </div>
                         )
                       }}
