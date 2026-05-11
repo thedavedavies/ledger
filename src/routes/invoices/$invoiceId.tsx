@@ -27,7 +27,9 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import { RecordPaymentDialog } from '#/components/RecordPaymentDialog'
+import { buildInvoiceActivity } from '#/lib/invoice-activity'
 import { formatMoney } from '#/lib/money'
+import { timeAgo } from '#/lib/time-ago'
 import { getCompanyProfile } from '#/server/settings.fn'
 import {
   getInvoice,
@@ -65,20 +67,6 @@ function formatDate(date: string | Date): string {
     month: 'short',
     year: 'numeric',
   })
-}
-
-function formatRelative(date: Date): string {
-  const now = Date.now()
-  const t = date.getTime()
-  const diffMs = now - t
-  const mins = Math.round(diffMs / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`
-  const hours = Math.round(mins / 60)
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
-  const days = Math.round(hours / 24)
-  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`
-  return formatDate(date)
 }
 
 function InvoiceViewPage() {
@@ -447,14 +435,14 @@ function InvoiceViewPage() {
                 aria-hidden
                 className="absolute top-2 bottom-2 left-[3px] w-px bg-border"
               />
-              {buildActivity(inv, payments, fmt).map((event, i) => (
+              {buildInvoiceActivity(inv, payments, fmt).map((event, i) => (
                 <li key={i} className="relative">
                   <span
                     aria-hidden
                     className="absolute -left-4 top-1.5 size-1.5 rounded-full bg-foreground"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    {formatRelative(event.at)}
+                    {timeAgo(event.at)}
                   </p>
                   <p className="text-[13px] text-foreground">{event.label}</p>
                 </li>
@@ -535,44 +523,6 @@ function InvoiceViewPage() {
       </Dialog>
     </div>
   )
-}
-
-type Activity = { at: Date; label: string }
-
-function buildActivity(
-  inv: { createdAt: Date | string; status: InvoiceStatus },
-  payments: Array<{
-    id: string
-    paidAt: Date | string
-    amountCents: bigint
-    method: string
-  }>,
-  fmt: (cents: bigint) => string,
-): Activity[] {
-  const events: Activity[] = []
-  events.push({
-    at: new Date(inv.createdAt),
-    label: 'Invoice created',
-  })
-  for (const p of payments) {
-    events.push({
-      at: new Date(p.paidAt),
-      label: `Payment recorded · ${fmt(p.amountCents)}${p.method ? ` (${p.method})` : ''}`,
-    })
-  }
-  if (inv.status === 'paid') {
-    events.push({
-      at: new Date(),
-      label: 'Marked as paid',
-    })
-  } else if (inv.status === 'void') {
-    events.push({
-      at: new Date(),
-      label: 'Voided',
-    })
-  }
-  // newest first
-  return events.sort((a, b) => b.at.getTime() - a.at.getTime())
 }
 
 function InvoiceNotFound() {
