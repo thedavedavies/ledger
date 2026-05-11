@@ -193,7 +193,10 @@ export function InvoiceForm({
             {(field) => (
               <div className="mt-4">
                 {field.state.meta.errorMap.onChange && (
-                  <p className="mb-2 text-sm text-destructive">
+                  <p
+                    role="alert"
+                    className="mb-2 text-sm text-destructive"
+                  >
                     {field.state.meta.errorMap.onChange}
                   </p>
                 )}
@@ -246,13 +249,6 @@ export function InvoiceForm({
                                   }
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') e.preventDefault()
-                                    if (
-                                      e.key === 'Tab' &&
-                                      !e.shiftKey &&
-                                      i === field.state.value.length - 1
-                                    ) {
-                                      // We don't prevent default here; the next field (unitPrice) exists
-                                    }
                                   }}
                                   placeholder="0"
                                   inputMode="decimal"
@@ -270,24 +266,6 @@ export function InvoiceForm({
                                   }
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') e.preventDefault()
-                                    if (
-                                      e.key === 'Tab' &&
-                                      !e.shiftKey &&
-                                      i === field.state.value.length - 1
-                                    ) {
-                                      e.preventDefault()
-                                      field.pushValue({
-                                        description: '',
-                                        quantity: '1',
-                                        unitPrice: '',
-                                      })
-                                      requestAnimationFrame(() => {
-                                        const ref = descriptionRefs.current.get(
-                                          i + 1,
-                                        )
-                                        ref?.focus()
-                                      })
-                                    }
                                   }}
                                   placeholder="0.00"
                                   inputMode="decimal"
@@ -302,7 +280,11 @@ export function InvoiceForm({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                              aria-label={`Remove line item ${i + 1}`}
+                              aria-disabled={
+                                field.state.value.length <= 1 || undefined
+                              }
+                              className="h-8 w-8 cursor-pointer p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
                               onClick={() => {
                                 if (field.state.value.length <= 1) return
                                 field.removeValue(i)
@@ -313,9 +295,8 @@ export function InvoiceForm({
                                   ref?.focus()
                                 })
                               }}
-                              disabled={field.state.value.length <= 1}
                             >
-                              <Trash2 className="size-3.5" />
+                              <Trash2 className="size-3.5" aria-hidden={false} />
                             </Button>
                           </div>
                         )
