@@ -170,6 +170,7 @@ function InvoicesPage() {
                           params={{ invoiceId: inv.id }}
                         >
                           View
+                          <span className="sr-only"> invoice {inv.number}</span>
                         </Link>
                       </Button>
                       <Button
