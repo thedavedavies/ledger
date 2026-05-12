@@ -129,7 +129,9 @@ function InvoicesPage() {
                 <TableHead>Due</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]" />
+                <TableHead className="w-[100px]">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
