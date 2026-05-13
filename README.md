@@ -1,4 +1,4 @@
-# Invoice Software
+# Ledger.
 
 > A minimal, self-hostable invoicing app. Create clients, create invoices, download PDFs. No auth, no SaaS chrome — just the boring useful parts.
 
