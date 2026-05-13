@@ -6,10 +6,10 @@
 
 ## Test plan
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run test` passes
-- [ ] If touching server code or schema: `npm run db:migrate` is idempotent on a fresh DB
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm lint` passes
+- [ ] `pnpm test` passes
+- [ ] If touching server code or schema: `pnpm db:migrate` is idempotent on a fresh DB
 
 ## DCO
 

@@ -31,12 +31,15 @@ Stop with `docker compose down`. Data persists in named volumes (`pgdata`, `uplo
 
 If you'd rather run the app on your host (faster HMR), bring up only Postgres in Docker:
 
+This project uses [pnpm](https://pnpm.io) (via [Corepack](https://nodejs.org/api/corepack.html)). The pinned version in `package.json` will be activated automatically, so you do not need to install pnpm globally.
+
 ```bash
 cp .env.example .env
 docker compose -f docker/postgres-dev.yml up -d
-npm ci
-npm run db:migrate
-npm run dev
+corepack enable                # one-time, activates pnpm from packageManager field
+pnpm install --frozen-lockfile
+pnpm db:migrate
+pnpm dev
 ```
 
 Open `http://localhost:3000`.
