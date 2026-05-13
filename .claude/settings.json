@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep *)",
+      "Bash(rg *)",
+
+      "Bash(git config user.name)",
+      "Bash(git config user.email)",
+      "Bash(git config --get *)",
+
+      "Bash(corepack --version)",
+      "Bash(corepack enable *)",
+      "Bash(corepack prepare *)",
+      "Bash(corepack use *)",
+
+      "Bash(pnpm --version)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm import *)",
+      "Bash(pnpm rebuild)",
+      "Bash(pnpm rebuild *)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm test)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm build)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm format:check)",
+      "Bash(pnpm format:check *)",
+      "Bash(pnpm config get *)",
+      "Bash(pnpm outdated)",
+      "Bash(pnpm outdated *)",
+      "Bash(pnpm why *)",
+      "Bash(pnpm list)",
+      "Bash(pnpm list *)",
+      "Bash(pnpm ls)",
+      "Bash(pnpm ls *)",
+      "Bash(pnpm audit)",
+      "Bash(pnpm audit *)",
+      "Bash(pnpm licenses *)",
+
+      "mcp__Claude_Preview__preview_screenshot",
+      "mcp__Claude_Preview__preview_console_logs",
+      "mcp__Claude_Preview__preview_logs",
+      "mcp__Claude_Preview__preview_inspect",
+      "mcp__Claude_Preview__preview_snapshot",
+      "mcp__Claude_Preview__preview_list",
+      "mcp__Claude_Preview__preview_network",
+
+      "mcp__pencil__batch_get",
+      "mcp__pencil__get_screenshot",
+      "mcp__pencil__snapshot_layout",
+      "mcp__pencil__get_editor_state",
+      "mcp__pencil__get_guidelines",
+      "mcp__pencil__get_variables"
+    ]
+  }
+}
