@@ -1,16 +1,15 @@
-import { useState } from 'react'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
-import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '#/components/ui/dialog'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import {
   Table,
   TableBody,
@@ -21,33 +20,48 @@ import {
 } from '#/components/ui/table'
 import { formatMoney } from '#/lib/money'
 import { getCompanyProfile } from '#/server/settings.fn'
-import { deleteInvoice, listInvoices } from '#/server/invoices.fn'
+import { listClients } from '#/server/clients.fn'
+import { listInvoices } from '#/server/invoices.fn'
 import type { InvoiceStatus } from '#/server/schema'
+
+type StatusFilter = InvoiceStatus | 'all' | 'overdue'
+type DatePreset = 'all' | 'this-month' | 'last-month' | 'this-quarter' | 'this-year' | 'last-year'
+
+const PAGE_SIZE = 25
 
 export const Route = createFileRoute('/invoices/')({
   loader: async () => {
-    const [invoices, profile] = await Promise.all([
+    const [invoices, clients, profile] = await Promise.all([
       listInvoices(),
+      listClients(),
       getCompanyProfile(),
     ])
-    return { invoices, profile }
+    return { invoices, clients, profile }
   },
   component: InvoicesPage,
 })
 
-const STATUS_STYLES: Record<InvoiceStatus, string> = {
+const STATUS_STYLES: Record<InvoiceStatus | 'overdue', string> = {
   draft: 'status-draft',
   sent: 'status-sent',
   paid: 'status-paid',
   void: 'status-void',
+  overdue: 'status-overdue',
 }
 
-function StatusBadge({ status }: { status: InvoiceStatus }) {
+function StatusBadge({ status, overdue }: { status: InvoiceStatus; overdue?: boolean }) {
+  const effective = overdue ? 'overdue' : status
   return (
-    <span className={`status-pill ${STATUS_STYLES[status]}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+    <span className={`status-pill ${STATUS_STYLES[effective]}`}>
+      {effective.charAt(0).toUpperCase() + effective.slice(1)}
     </span>
   )
+}
+
+function startOfToday(): Date {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
 }
 
 function formatDate(date: string | Date): string {
@@ -58,32 +72,113 @@ function formatDate(date: string | Date): string {
   })
 }
 
+// End is exclusive (start of next period). Returns null for 'all'.
+function dateRangeFor(preset: DatePreset, today: Date): { start: Date; end: Date } | null {
+  if (preset === 'all') return null
+  const y = today.getFullYear()
+  const m = today.getMonth()
+  switch (preset) {
+    case 'this-month':
+      return { start: new Date(y, m, 1), end: new Date(y, m + 1, 1) }
+    case 'last-month':
+      return { start: new Date(y, m - 1, 1), end: new Date(y, m, 1) }
+    case 'this-quarter': {
+      const qStart = Math.floor(m / 3) * 3
+      return { start: new Date(y, qStart, 1), end: new Date(y, qStart + 3, 1) }
+    }
+    case 'this-year':
+      return { start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1) }
+    case 'last-year':
+      return { start: new Date(y - 1, 0, 1), end: new Date(y, 0, 1) }
+  }
+}
+
+// Smart page-number list with ellipses for large totals.
+function pageItems(current: number, total: number): (number | 'gap')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const items: (number | 'gap')[] = [1]
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  if (start > 2) items.push('gap')
+  for (let i = start; i <= end; i++) items.push(i)
+  if (end < total - 1) items.push('gap')
+  items.push(total)
+  return items
+}
+
 function InvoicesPage() {
-  const { invoices, profile } = Route.useLoaderData()
-  const router = useRouter()
+  const { invoices, clients, profile } = Route.useLoaderData()
   const needsSetup = !profile.businessName
   const currency = profile.defaultCurrency || 'USD'
 
-  const [deleteTarget, setDeleteTarget] = useState<{
-    id: string
-    number: string
-  } | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [clientFilter, setClientFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<DatePreset>('all')
+  const [page, setPage] = useState(1)
 
-  async function handleDelete() {
-    if (!deleteTarget) return
-    setDeleting(true)
-    try {
-      await deleteInvoice({ data: { id: deleteTarget.id } })
-      toast.success('Invoice deleted')
-      setDeleteTarget(null)
-      await router.invalidate()
-    } catch {
-      toast.error('Something went wrong. Please try again.')
-    } finally {
-      setDeleting(false)
-    }
+  const today = useMemo(() => startOfToday(), [])
+
+  // Clients used by at least one invoice, sorted alphabetically. Avoids
+  // listing clients with no invoices in the dropdown.
+  const clientOptions = useMemo(() => {
+    const used = new Set(invoices.map((i) => i.clientId))
+    return clients
+      .filter((c) => used.has(c.id))
+      .map((c) => ({ id: c.id, name: c.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [invoices, clients])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const range = dateRangeFor(dateFilter, today)
+    return invoices.filter((inv) => {
+      const isOverdue = inv.status === 'sent' && new Date(inv.dueDate) < today
+
+      if (statusFilter === 'overdue') {
+        if (!isOverdue) return false
+      } else if (statusFilter !== 'all') {
+        if (inv.status !== statusFilter) return false
+      }
+
+      if (clientFilter !== 'all' && inv.clientId !== clientFilter) return false
+
+      if (range) {
+        const issued = new Date(inv.issueDate)
+        if (issued < range.start || issued >= range.end) return false
+      }
+
+      if (q) {
+        const inNumber = inv.number.toLowerCase().includes(q)
+        const inClient = inv.clientName.toLowerCase().includes(q)
+        if (!inNumber && !inClient) return false
+      }
+
+      return true
+    })
+  }, [invoices, search, statusFilter, clientFilter, dateFilter, today])
+
+  const filtersActive =
+    search.trim() !== '' || statusFilter !== 'all' || clientFilter !== 'all' || dateFilter !== 'all'
+
+  function clearFilters() {
+    setSearch('')
+    setStatusFilter('all')
+    setClientFilter('all')
+    setDateFilter('all')
   }
+
+  // Reset to first page whenever the filtered set changes, so the user is
+  // never stranded on an empty page after narrowing results.
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter, clientFilter, dateFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageStart = (safePage - 1) * PAGE_SIZE
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, filtered.length)
+  const pageRows = filtered.slice(pageStart, pageEnd)
 
   return (
     <div>
@@ -120,108 +215,228 @@ function InvoicesPage() {
         </div>
       ) : (
         <div className="mt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Number</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Issued</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((inv) => (
-                <TableRow
-                  key={inv.id}
-                  className={inv.status === 'void' ? 'line-through opacity-60' : ''}
-                >
-                  <TableCell className="font-medium">
-                    <Link
-                      to="/invoices/$invoiceId"
-                      params={{ invoiceId: inv.id }}
-                      className="hover:underline"
-                    >
-                      {inv.number}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{inv.clientName}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(inv.issueDate)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(inv.dueDate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatMoney(inv.totalCents, currency)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={inv.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link
-                          to="/invoices/$invoiceId"
-                          params={{ invoiceId: inv.id }}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[220px] sm:max-w-sm">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by number or client"
+                aria-label="Search invoices"
+                className="pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger aria-label="Filter by status" className="w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="void">Void</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={clientFilter}
+              onValueChange={setClientFilter}
+              disabled={clientOptions.length === 0}
+            >
+              <SelectTrigger aria-label="Filter by client" className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All clients</SelectItem>
+                {clientOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DatePreset)}>
+              <SelectTrigger aria-label="Filter by date" className="w-[170px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="this-month">This month</SelectItem>
+                <SelectItem value="last-month">Last month</SelectItem>
+                <SelectItem value="this-quarter">This quarter</SelectItem>
+                <SelectItem value="this-year">This year</SelectItem>
+                <SelectItem value="last-year">Last year</SelectItem>
+              </SelectContent>
+            </Select>
+            {filtersActive && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="size-4" />
+                Clear
+              </Button>
+            )}
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="mt-12 flex flex-col items-center justify-center text-center">
+              <p className="text-muted-foreground">No invoices match your filters</p>
+              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
+                Clear filters
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Number</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Issued</TableHead>
+                      <TableHead>Due</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[100px]">
+                        <span className="sr-only">Actions</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pageRows.map((inv) => {
+                      const isOverdue = inv.status === 'sent' && new Date(inv.dueDate) < today
+                      return (
+                        <TableRow
+                          key={inv.id}
+                          className={inv.status === 'void' ? 'line-through opacity-60' : ''}
                         >
-                          View
-                          <span className="sr-only"> invoice {inv.number}</span>
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() =>
-                          setDeleteTarget({ id: inv.id, number: inv.number })
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                          <TableCell className="font-medium">
+                            <Link
+                              to="/invoices/$invoiceId"
+                              params={{ invoiceId: inv.id }}
+                              className="hover:underline"
+                            >
+                              {inv.number}
+                            </Link>
+                          </TableCell>
+                          <TableCell>{inv.clientName}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {formatDate(inv.issueDate)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {formatDate(inv.dueDate)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatMoney(inv.totalCents, currency)}
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge status={inv.status} overdue={isOverdue} />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" asChild>
+                              <Link to="/invoices/$invoiceId" params={{ invoiceId: inv.id }}>
+                                View
+                                <span className="sr-only"> invoice {inv.number}</span>
+                              </Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <Pagination
+                page={safePage}
+                pageSize={PAGE_SIZE}
+                totalRows={filtered.length}
+                totalPages={totalPages}
+                onChange={setPage}
+              />
+            </>
+          )}
         </div>
       )}
-
-      <Dialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>Delete invoice {deleteTarget?.number}?</DialogTitle>
-            <DialogDescription>
-              This will remove the invoice and all line items permanently. This
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteTarget(null)}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? 'Deleting…' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
+  )
+}
+
+function Pagination({
+  page,
+  pageSize,
+  totalRows,
+  totalPages,
+  onChange,
+}: {
+  page: number
+  pageSize: number
+  totalRows: number
+  totalPages: number
+  onChange: (p: number) => void
+}) {
+  const start = totalRows === 0 ? 0 : (page - 1) * pageSize + 1
+  const end = Math.min(page * pageSize, totalRows)
+  const items = pageItems(page, totalPages)
+
+  return (
+    <nav
+      aria-label="Invoice pagination"
+      className="mt-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
+    >
+      <p className="text-sm text-muted-foreground">
+        Showing {start}–{end} of {totalRows}
+      </p>
+      {totalPages > 1 && (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange(page - 1)}
+            disabled={page <= 1}
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="size-4" />
+            Previous
+          </Button>
+          {items.map((it, idx) =>
+            it === 'gap' ? (
+              <span
+                key={`gap-${idx}`}
+                aria-hidden="true"
+                className="px-2 text-sm text-muted-foreground"
+              >
+                …
+              </span>
+            ) : (
+              <Button
+                key={it}
+                variant={it === page ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onChange(it)}
+                aria-label={`Page ${it}`}
+                aria-current={it === page ? 'page' : undefined}
+                className="min-w-9"
+              >
+                {it}
+              </Button>
+            ),
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange(page + 1)}
+            disabled={page >= totalPages}
+            aria-label="Next page"
+          >
+            Next
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      )}
+    </nav>
   )
 }
