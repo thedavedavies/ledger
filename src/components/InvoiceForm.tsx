@@ -13,7 +13,13 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { invoiceInput, type InvoiceInput } from '#/lib/validators'
-import { fromCents, toCents, computeInvoiceTotals, formatMoney } from '#/lib/money'
+import {
+  fromCents,
+  toCents,
+  computeInvoiceTotals,
+  formatMoney,
+  currencySymbol,
+} from '#/lib/money'
 
 interface Client {
   id: string
@@ -53,11 +59,12 @@ function tryComputeTotals(lineItems: InvoiceInput['lineItems'], taxRate: string)
 
 function computeLineTotal(quantity: string, unitPrice: string): string | null {
   try {
+    if (quantity === '') return null
+    const effectivePrice = unitPrice === '' ? '0' : unitPrice
     const qty = Number(quantity)
-    const price = Number(unitPrice)
+    const price = Number(effectivePrice)
     if (isNaN(qty) || isNaN(price) || qty <= 0 || price < 0) return null
-    if (quantity === '' || unitPrice === '') return null
-    const cents = toCents(unitPrice)
+    const cents = toCents(effectivePrice)
     const { lineTotals } = computeInvoiceTotals(
       [{ quantity, unitPriceCents: cents }],
       0,
@@ -77,6 +84,7 @@ export function InvoiceForm({
 }: InvoiceFormProps) {
   const descriptionRefs = useRef<Map<number, HTMLInputElement>>(new Map())
   const lineIdBase = useId()
+  const symbol = currencySymbol(currency)
 
   const form = useForm({
     defaultValues,
@@ -280,19 +288,27 @@ export function InvoiceForm({
                                   <label htmlFor={priceId} className="sr-only">
                                     Unit price for line item {i + 1}
                                   </label>
-                                  <Input
-                                    id={priceId}
-                                    value={priceField.state.value}
-                                    onBlur={priceField.handleBlur}
-                                    onChange={(e) =>
-                                      priceField.handleChange(e.target.value)
-                                    }
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') e.preventDefault()
-                                    }}
-                                    inputMode="decimal"
-                                    className="h-8 text-right text-sm"
-                                  />
+                                  <div className="relative">
+                                    <span
+                                      aria-hidden
+                                      className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-sm text-muted-foreground"
+                                    >
+                                      {symbol}
+                                    </span>
+                                    <Input
+                                      id={priceId}
+                                      value={priceField.state.value}
+                                      onBlur={priceField.handleBlur}
+                                      onChange={(e) =>
+                                        priceField.handleChange(e.target.value)
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') e.preventDefault()
+                                      }}
+                                      inputMode="decimal"
+                                      className="h-8 pl-7 text-right text-sm"
+                                    />
+                                  </div>
                                 </div>
                               )}
                             </form.Field>

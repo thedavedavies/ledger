@@ -30,6 +30,18 @@ export function formatMoney(cents: bigint, currency: string): string {
   }).format(num)
 }
 
+export function currencySymbol(currency: string): string {
+  try {
+    const parts = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+    }).formatToParts(0)
+    return parts.find((p) => p.type === 'currency')?.value ?? currency
+  } catch {
+    return currency
+  }
+}
+
 export function computeLineTotalCents(
   quantity: string,
   unitPriceCents: bigint,
