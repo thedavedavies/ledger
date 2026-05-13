@@ -4,6 +4,10 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "packageManager": "pnpm@11.1.0",
+  "engines": {
+    "node": ">=22"
+  },
   "imports": {
     "#/*": "./src/*"
   },
@@ -22,7 +26,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "sandcastle": "npx tsx .sandcastle/main.mts"
+    "sandcastle": "tsx .sandcastle/main.mts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

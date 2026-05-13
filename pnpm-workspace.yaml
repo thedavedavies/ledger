@@ -1,0 +1,7 @@
+# pnpm blocks lifecycle scripts of dependencies by default (supply-chain defense).
+# Only allow scripts for packages we explicitly trust. Each entry is a known
+# native binding or prebuilt-binary extractor; review before adding more.
+allowBuilds:
+  '@parcel/watcher': true   # native file-watcher binding (Vite/TanStack)
+  esbuild: true             # downloads prebuilt esbuild binary
+  msgpackr-extract: true    # native msgpack accelerator (sandcastle)
