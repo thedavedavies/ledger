@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Download, Plus, X } from 'lucide-react'
+import { Download, MoreHorizontal, Pencil, Plus, Send, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { IconButton } from '#/components/ui/icon-button'
 import {
@@ -13,12 +13,17 @@ import {
   DialogTitle,
 } from '#/components/ui/dialog'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
 import {
   Table,
   TableBody,
@@ -78,6 +83,7 @@ function InvoiceViewPage() {
   const [deleting, setDeleting] = useState(false)
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null)
   const [showRecordPayment, setShowRecordPayment] = useState(false)
+  const [sending, setSending] = useState(false)
 
   if (!inv) return <InvoiceNotFound />
 
@@ -120,6 +126,37 @@ function InvoiceViewPage() {
     }
   }
 
+  function downloadPdf() {
+    if (!inv) return
+    const a = document.createElement('a')
+    a.href = `/api/invoices/${inv.id}/pdf`
+    a.download = `${inv.number}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
+
+  // Combo action: flips draft to sent (skipped if already sent), then triggers
+  // PDF download so the user can email it manually until SMTP lands.
+  async function handleSend() {
+    if (!inv) return
+    setSending(true)
+    try {
+      if (inv.status === 'draft') {
+        await updateInvoiceStatus({
+          data: { id: inv.id, status: 'sent' },
+        })
+      }
+      downloadPdf()
+      await router.invalidate()
+      toast.success('Invoice sent. PDF downloaded.')
+    } catch {
+      toast.error('Failed to send invoice')
+    } finally {
+      setSending(false)
+    }
+  }
+
   async function handleDeletePayment(id: string) {
     try {
       await deletePayment({ data: { id } })
@@ -150,53 +187,69 @@ function InvoiceViewPage() {
             {inv.client?.name}
           </p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Select value={inv.status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-32" aria-label="Invoice status">
-              <SelectValue
-                placeholder={
-                  inv.status.charAt(0).toUpperCase() + inv.status.slice(1)
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" asChild>
-            <Link
-              to="/invoices/$invoiceId/edit"
-              params={{ invoiceId: inv.id }}
-            >
-              Edit
-            </Link>
-          </Button>
-          <Button
-            variant="outline"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setShowDelete(true)}
-          >
-            Delete
-          </Button>
-          <Button variant="outline" asChild>
-            <a
-              href={`/api/invoices/${inv.id}/pdf`}
-              download={`${inv.number}.pdf`}
-            >
-              <Download className="size-4" />
-              Download PDF
-            </a>
-          </Button>
-          {balanceDueCents > 0n && (
-            <Button onClick={() => setShowRecordPayment(true)}>
-              <Plus className="size-4" />
-              Record payment
+        <div className="flex items-center justify-end gap-2">
+          {inv.status === 'draft' && (
+            <Button onClick={handleSend} disabled={sending}>
+              <Send className="size-4" />
+              {sending ? 'Sending…' : 'Send'}
             </Button>
           )}
+          {(inv.status === 'sent' || inv.status === 'paid') &&
+            balanceDueCents > 0n && (
+              <Button onClick={() => setShowRecordPayment(true)}>
+                <Plus className="size-4" />
+                Record payment
+              </Button>
+            )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="More actions"
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/invoices/$invoiceId/edit"
+                  params={{ invoiceId: inv.id }}
+                >
+                  <Pencil className="size-4" />
+                  Edit
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={downloadPdf}>
+                <Download className="size-4" />
+                Download PDF
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Change status</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuRadioGroup
+                    value={inv.status}
+                    onValueChange={handleStatusChange}
+                  >
+                    {STATUSES.map((s) => (
+                      <DropdownMenuRadioItem key={s} value={s}>
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => setShowDelete(true)}
+              >
+                <X className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
