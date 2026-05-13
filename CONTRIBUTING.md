@@ -16,7 +16,7 @@ We do **not** use a CLA. Contributors retain copyright over their work.
 
 ## Dev setup
 
-Requires Node 22 (see `.nvmrc`) and either Docker (for Postgres) or a local Postgres on `127.0.0.1:5432`.
+Requires Node 22 (see `.nvmrc`) and either Docker (for Postgres) or a local Postgres on `127.0.0.1:5432`. The package manager is [pnpm](https://pnpm.io), activated automatically via Corepack from the `packageManager` field in `package.json`.
 
 ```bash
 git clone https://github.com/<your-fork>/invoice-software.git
@@ -24,9 +24,10 @@ cd invoice-software
 cp .env.example .env
 # edit .env so DATABASE_URL points at a Postgres you can reach
 docker compose -f docker/postgres-dev.yml up -d   # optional; skip if you already run Postgres locally
-npm ci
-npm run db:migrate
-npm run dev
+corepack enable                                   # one-time, activates pnpm
+pnpm install --frozen-lockfile
+pnpm db:migrate
+pnpm dev
 ```
 
 Open `http://localhost:3000`.
@@ -35,10 +36,10 @@ Open `http://localhost:3000`.
 
 Before opening a PR:
 
-- `npm run typecheck` — zero errors
-- `npm run lint` — zero errors
-- `npm run test` — all green
-- `npm run test:e2e` — only when the change touches end-to-end behaviour (PDF render, invoice CRUD)
+- `pnpm typecheck`, zero errors
+- `pnpm lint`, zero errors
+- `pnpm test`, all green
+- `pnpm test:e2e`, only when the change touches end-to-end behaviour (PDF render, invoice CRUD)
 
 CI runs all of the above on every push and PR, plus a Docker image build smoke test.
 

@@ -58,10 +58,10 @@ This file is the canonical guide for any AI agent (Claude Code, Cursor, Copilot,
 All four must be green before claiming a task is done:
 
 ```bash
-npm run typecheck
-npm run lint
-npm run test
-npm run test:e2e   # only when touching e2e-relevant behaviour
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:e2e   # only when touching e2e-relevant behaviour
 ```
 
 CI runs all of these on every push and PR, plus a `docker build` smoke test.
