@@ -19,7 +19,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    command: npx tsx scripts/migrate.ts
+    command: pnpm exec tsx scripts/migrate.ts
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/invoice
     depends_on:
