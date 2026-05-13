@@ -17,10 +17,7 @@ import { getCompanyProfile } from '#/server/settings.fn'
 
 export const Route = createFileRoute('/')({
   loader: async () => {
-    const [data, profile] = await Promise.all([
-      getDashboardData(),
-      getCompanyProfile(),
-    ])
+    const [data, profile] = await Promise.all([getDashboardData(), getCompanyProfile()])
     return { data, profile }
   },
   component: DashboardPage,
@@ -45,9 +42,7 @@ function DeltaLabel({
 }) {
   const pct = percentChange(current, prev)
   if (pct === null) {
-    return (
-      <span className="text-muted-foreground">No activity in {monthLabel}</span>
-    )
+    return <span className="text-muted-foreground">No activity in {monthLabel}</span>
   }
   const isUp = pct > 0
   const isFlat = pct === 0
@@ -131,20 +126,14 @@ function DashboardPage() {
         aria-label="Monthly summary"
         className="mt-8 grid grid-cols-3 gap-10 border-b border-border pb-10"
       >
-        <KpiCard
-          label="Invoiced this month"
-          value={fmt(data.kpi.invoicedThisMonthCents)}
-        >
+        <KpiCard label="Invoiced this month" value={fmt(data.kpi.invoicedThisMonthCents)}>
           <DeltaLabel
             current={data.kpi.invoicedThisMonthCents}
             prev={data.kpi.invoicedLastMonthCents}
             monthLabel={prevMonthLabel}
           />
         </KpiCard>
-        <KpiCard
-          label="Paid this month"
-          value={fmt(data.kpi.paidThisMonthCents)}
-        >
+        <KpiCard label="Paid this month" value={fmt(data.kpi.paidThisMonthCents)}>
           <DeltaLabel
             current={data.kpi.paidThisMonthCents}
             prev={data.kpi.paidLastMonthCents}
@@ -177,9 +166,7 @@ function DashboardPage() {
       <section className="mt-12">
         <div className="flex items-end justify-between">
           <div>
-            <h2 className="text-xl font-normal tracking-tight">
-              Outstanding invoices
-            </h2>
+            <h2 className="text-xl font-normal tracking-tight">Outstanding invoices</h2>
             {data.outstandingCount > data.outstanding.length && (
               <p className="mt-1 text-xs text-muted-foreground">
                 Showing {data.outstanding.length} of {data.outstandingCount}
@@ -187,10 +174,7 @@ function DashboardPage() {
             )}
           </div>
           {data.outstandingCount > 0 && (
-            <Link
-              to="/invoices"
-              className="text-sm text-[var(--color-accent)] hover:underline"
-            >
+            <Link to="/invoices" className="text-sm text-[var(--color-accent)] hover:underline">
               View all
             </Link>
           )}
