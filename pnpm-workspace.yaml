@@ -4,4 +4,3 @@
 allowBuilds:
   '@parcel/watcher': true   # native file-watcher binding (Vite/TanStack)
   esbuild: true             # downloads prebuilt esbuild binary
-  msgpackr-extract: true    # native msgpack accelerator (sandcastle)
