@@ -100,7 +100,8 @@
                           "fill": "$text-secondary",
                           "content": "Invoices",
                           "fontFamily": "$font-sans",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -121,7 +122,8 @@
                           "fill": "$text-secondary",
                           "content": "Clients",
                           "fontFamily": "$font-sans",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -142,7 +144,8 @@
                           "fill": "$text-secondary",
                           "content": "Settings",
                           "fontFamily": "$font-sans",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -323,6 +326,7 @@
                       "content": "£18,420.00",
                       "fontFamily": "$font-serif",
                       "fontSize": 64,
+                      "fontWeight": "normal",
                       "letterSpacing": -1.2
                     },
                     {
@@ -364,6 +368,7 @@
                       "content": "£12,960.00",
                       "fontFamily": "$font-serif",
                       "fontSize": 64,
+                      "fontWeight": "normal",
                       "letterSpacing": -1.2
                     },
                     {
@@ -405,6 +410,7 @@
                       "content": "£8,475.00",
                       "fontFamily": "$font-serif",
                       "fontSize": 64,
+                      "fontWeight": "normal",
                       "letterSpacing": -1.2
                     },
                     {
@@ -3589,7 +3595,8 @@
                           "fill": "$text-secondary",
                           "content": "Dashboard",
                           "fontFamily": "$font-sans",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -3637,7 +3644,8 @@
                           "fill": "$text-secondary",
                           "content": "Clients",
                           "fontFamily": "$font-sans",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -3660,7 +3668,8 @@
                           "fill": "$text-secondary",
                           "content": "Settings",
                           "fontFamily": "$font-sans",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -6191,7 +6200,8 @@
                   "fill": "$text-primary",
                   "content": "Clients",
                   "fontFamily": "$font-serif",
-                  "fontSize": 36
+                  "fontSize": 36,
+                  "fontWeight": "normal"
                 },
                 {
                   "type": "frame",
@@ -8331,6 +8341,7 @@
                               "content": "Invoice",
                               "fontFamily": "$font-serif",
                               "fontSize": 44,
+                              "fontWeight": "normal",
                               "letterSpacing": -0.8
                             },
                             {
