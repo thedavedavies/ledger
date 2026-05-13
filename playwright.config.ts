@@ -7,11 +7,10 @@ export default defineConfig({
     baseURL: process.env['BASE_URL'] || 'http://localhost:3000',
     headless: true,
   },
-  webServer: process.env['CI']
-    ? undefined
-    : {
-        command: 'npm run dev',
-        port: 3000,
-        reuseExistingServer: true,
-      },
+  webServer: {
+    command: process.env['CI'] ? 'pnpm start' : 'npm run dev',
+    port: 3000,
+    reuseExistingServer: !process.env['CI'],
+    timeout: 120_000,
+  },
 })
