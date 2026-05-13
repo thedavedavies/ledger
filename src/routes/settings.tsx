@@ -91,7 +91,6 @@ function SettingsPage() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="Acme Inc."
                     />
                   )}
                 </FormField>
@@ -108,7 +107,6 @@ function SettingsPage() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="123 Main St"
                     />
                   )}
                 </FormField>
@@ -177,7 +175,6 @@ function SettingsPage() {
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="billing@example.com"
                       />
                     )}
                   </FormField>
@@ -235,7 +232,7 @@ function SettingsPage() {
                       onValueChange={(v) => field.handleChange(v)}
                     >
                       <SelectTrigger {...props} className="w-full">
-                        <SelectValue placeholder="Select currency" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {CURRENCIES.map((c) => (
@@ -261,7 +258,6 @@ function SettingsPage() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="0"
                       className="max-w-32"
                     />
                   )}
@@ -278,7 +274,6 @@ function SettingsPage() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="INV"
                       className="max-w-40"
                     />
                   )}

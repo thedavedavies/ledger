@@ -129,7 +129,7 @@ export function InvoiceForm({
                       onValueChange={(v) => field.handleChange(v)}
                     >
                       <SelectTrigger {...props} className="w-full">
-                        <SelectValue placeholder="Select a client" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {clients.map((c) => (
@@ -247,7 +247,6 @@ export function InvoiceForm({
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') e.preventDefault()
                                     }}
-                                    placeholder="Description"
                                     className="h-8 text-sm"
                                   />
                                 </div>
@@ -269,7 +268,6 @@ export function InvoiceForm({
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') e.preventDefault()
                                     }}
-                                    placeholder="0"
                                     inputMode="decimal"
                                     className="h-8 text-right text-sm"
                                   />
@@ -292,7 +290,6 @@ export function InvoiceForm({
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') e.preventDefault()
                                     }}
-                                    placeholder="0.00"
                                     inputMode="decimal"
                                     className="h-8 text-right text-sm"
                                   />
@@ -414,7 +411,6 @@ export function InvoiceForm({
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="0"
                       className="max-w-32"
                     />
                   )}
@@ -434,9 +430,8 @@ export function InvoiceForm({
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="Payment terms, bank details, or additional notes..."
                       rows={3}
-                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     />
                   )}
                 </FormField>
