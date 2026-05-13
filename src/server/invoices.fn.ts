@@ -13,6 +13,7 @@ export const listInvoices = createServerFn({ method: 'GET' }).handler(
       .select({
         id: invoice.id,
         number: invoice.number,
+        clientId: invoice.clientId,
         clientName: client.name,
         issueDate: invoice.issueDate,
         dueDate: invoice.dueDate,
