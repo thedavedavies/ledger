@@ -1,30 +1,36 @@
 # Contributing
 
-Thanks for considering a contribution. This is a small, focused project — patches that match the project's scope and style are very welcome.
+Thanks for considering a contribution. This project is small and opinionated. The bar for a PR is whether the change fits the project's scope and style, not whether it's well-written code in the abstract.
+
+## Discuss before building
+
+For anything beyond a small bug fix, open a [discussion](https://github.com/thedavedavies/ledger/discussions) or issue before writing code. PRs without prior discussion may still be merged, but changes that have been talked through get attention first.
+
+Bug fixes don't need discussion. If something is broken, send a PR with a regression test.
 
 ## Sign your commits (DCO)
 
-Every commit must include a `Signed-off-by` trailer asserting the [Developer Certificate of Origin](https://developercertificate.org/). Use the `-s` flag on every commit:
+Every commit must carry a `Signed-off-by` trailer asserting the [Developer Certificate of Origin](https://developercertificate.org/). Use `-s`:
 
 ```bash
 git commit -s -m "your message"
 ```
 
-This adds a line like `Signed-off-by: Your Name <your.email@example.com>` to the message. The `dco` GitHub Action enforces this on every PR — unsigned commits block merge.
+This adds `Signed-off-by: Your Name <your.email@example.com>` to the commit message. The `dco` GitHub Action blocks unsigned commits at the PR boundary.
 
-We do **not** use a CLA. Contributors retain copyright over their work.
+No CLA. Contributors keep copyright over their work.
 
 ## Dev setup
 
-Requires Node 22 (see `.nvmrc`) and either Docker (for Postgres) or a local Postgres on `127.0.0.1:5432`. The package manager is [pnpm](https://pnpm.io), activated automatically via Corepack from the `packageManager` field in `package.json`.
+Requires Node 22 (see `.nvmrc`) and either Docker (for Postgres) or a local Postgres on `127.0.0.1:5432`. The package manager is [pnpm](https://pnpm.io), activated via Corepack from the `packageManager` field in `package.json`.
 
 ```bash
 git clone https://github.com/<your-fork>/ledger.git
 cd ledger
 cp .env.example .env
-# edit .env so DATABASE_URL points at a Postgres you can reach
-docker compose -f docker/postgres-dev.yml up -d   # optional; skip if you already run Postgres locally
-corepack enable                                   # one-time, activates pnpm
+# Point DATABASE_URL at a Postgres you can reach
+docker compose -f docker/postgres-dev.yml up -d   # optional, skip if you run Postgres locally
+corepack enable
 pnpm install --frozen-lockfile
 pnpm db:migrate
 pnpm dev
@@ -34,26 +40,32 @@ Open `http://localhost:3000`.
 
 ## Quality gates
 
-Before opening a PR:
+All three must pass before opening a PR:
 
-- `pnpm typecheck`, zero errors
-- `pnpm lint`, zero errors
-- `pnpm test`, all green
-- `pnpm test:e2e`, only when the change touches end-to-end behaviour (PDF render, invoice CRUD)
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm test`
 
-CI runs all of the above on every push and PR, plus a Docker image build smoke test.
+Add `pnpm test:e2e` when the change touches end-to-end behaviour (PDF render, invoice CRUD, navigation).
+
+CI runs all of these on every push and PR, plus a Docker image build smoke test.
 
 ## Style
 
-- TypeScript strict mode is on. Don't bypass with `as any`.
-- Money is integer minor units (cents) stored as `bigint`. Never use floats for money.
-- Server functions own all validation (Zod) and persistence. Route components only call server functions.
-- Migrations are append-only. Never edit a migration file under `drizzle/` once it's merged.
+- TypeScript strict mode is on. Don't bypass with `as any`. If a type assertion is genuinely needed, narrow with `as unknown as T` and add a one-line comment explaining why.
+- Money is integer minor units (`bigint`). Never floats. Rounding lives in `src/lib/money.ts`.
+- Server functions (`src/server/*.fn.ts`) own all validation (Zod) and persistence. Route components call server functions; they do not query the DB or run Zod themselves.
+- Migrations under `drizzle/` are append-only. Once a migration is merged, don't edit it. Add a new migration that fixes forward.
+- Prettier: no semicolons, single quotes, trailing commas, 100-char width, 2-space indent. Don't fight it.
 
 ## Tests
 
-PRs that change behaviour need tests. Bug fixes need a regression test. Money math, invoice numbering, and PDF rendering have integration tests against real Postgres — additions to those areas should follow the same pattern.
+Behaviour changes need tests. Bug fixes need a regression test.
+
+Money math, invoice numbering, PDF rendering, and schema constraints have integration tests that hit a real Postgres. Don't mock the database for those. Follow the patterns in `tests/unit/`.
 
 ## Reporting issues
 
-Open a GitHub issue. Include reproduction steps, expected behaviour, and the version (commit SHA is fine). Security issues: see the contact line at the top of the README rather than filing publicly.
+Open a GitHub issue. Include reproduction steps, expected behaviour, and the version (commit SHA is fine).
+
+For security vulnerabilities, see [SECURITY.md](SECURITY.md). Please don't file security issues publicly.

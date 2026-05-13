@@ -4,11 +4,11 @@ This file is the canonical guide for any AI agent (Claude Code, Cursor, Copilot,
 
 ## What this is
 
-`ledger` is a self-hostable, single-tenant invoicing app. Create clients, create invoices, download PDFs. **Community Edition** under AGPL-3.0-or-later. Full project framing: [docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md](docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md) and [README.md](README.md).
+`ledger` is a self-hostable, single-tenant invoicing app. Create clients, create invoices, download PDFs. **Community Edition** under AGPL-3.0-or-later. Full project framing: [README.md](README.md).
 
-**Out of scope for this repo:** hosted SaaS, billing, multi-tenant infrastructure. Those will live in a separate private overlay repo that consumes this one as a dependency. Do not embed hosted-only concerns (billing UI, multi-tenancy scaffolding, plan gating, telemetry to a private backend) in core.
+**Out of scope for this repo:** hosted SaaS, billing, multi-tenant infrastructure. Do not embed hosted-only concerns (billing UI, multi-tenancy scaffolding, plan gating, telemetry to a private backend) in core.
 
-**Out of scope right now but planned**, each as its own future plan inside this repo: authentication, email send, public invoice link + tracking, payment links, monthly income chart, per-line VAT.
+**Out of scope right now but planned**: authentication, email send, public invoice link + tracking, payment links, monthly income chart, per-line VAT. Each will land as its own change.
 
 ## Stack
 
@@ -22,20 +22,18 @@ This file is the canonical guide for any AI agent (Claude Code, Cursor, Copilot,
 
 ## Where code lives
 
-| Path | What goes here |
-|---|---|
-| `src/routes/` | TanStack Router file-based routes. **Route components only call server functions**, they do not query the DB or run Zod themselves. |
-| `src/server/*.fn.ts` | Server functions (`createServerFn`). Own all validation, persistence, and side effects. |
-| `src/server/schema.ts` | The single Drizzle schema module. |
-| `src/server/pdf/` | `@react-pdf/renderer` invoice template + render helper. |
-| `src/components/` | Feature components. |
-| `src/components/ui/` | shadcn-style primitives, copy-in. Modify in place rather than wrapping. |
-| `src/lib/` | Pure helpers (money, currency, validators, time formatting). |
-| `drizzle/` | Append-only SQL migrations. **Never edit a merged migration.** |
-| `tests/unit/` | Vitest unit + integration tests (integration tests hit real Postgres). |
-| `tests/e2e/` | Playwright end-to-end tests. |
-| `docs/plans/` | One markdown plan per feature; status tracked at the top. |
-| `design.pen` | Source of truth for UI design. Open with the **Pencil MCP**, never `Read`/`Grep`. |
+| Path                   | What goes here                                                                                                                      |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/routes/`          | TanStack Router file-based routes. **Route components only call server functions**, they do not query the DB or run Zod themselves. |
+| `src/server/*.fn.ts`   | Server functions (`createServerFn`). Own all validation, persistence, and side effects.                                             |
+| `src/server/schema.ts` | The single Drizzle schema module.                                                                                                   |
+| `src/server/pdf/`      | `@react-pdf/renderer` invoice template + render helper.                                                                             |
+| `src/components/`      | Feature components.                                                                                                                 |
+| `src/components/ui/`   | shadcn-style primitives, copy-in. Modify in place rather than wrapping.                                                             |
+| `src/lib/`             | Pure helpers (money, currency, validators, time formatting).                                                                        |
+| `drizzle/`             | Append-only SQL migrations. **Never edit a merged migration.**                                                                      |
+| `tests/unit/`          | Vitest unit + integration tests (integration tests hit real Postgres).                                                              |
+| `tests/e2e/`           | Playwright end-to-end tests.                                                                                                        |
 
 ## Hard rules
 
@@ -45,7 +43,6 @@ This file is the canonical guide for any AI agent (Claude Code, Cursor, Copilot,
 4. **Migrations are append-only.** If a migration is merged, do not edit it. Add a new migration that fixes forward.
 5. **TypeScript strict, no `as any`.** If a type assertion is genuinely needed, narrow with `as unknown as T` and add a single-line comment explaining why.
 6. **Single tenant per database** (for now). UUID PKs everywhere so multi-tenancy can retrofit later. Do not add `user_id` or `account_id` columns on a one-off basis.
-7. **`.pen` design files are encrypted.** Use the Pencil MCP tools (`open_document`, `batch_get`, `get_screenshot`, etc.). Never `Read` or `Grep` a `.pen` file.
 
 ## Tests
 
@@ -78,7 +75,8 @@ CI runs all of these on every push and PR, plus a `docker build` smoke test.
 - **DCO sign-off is required on every commit.** Use `git commit -s`. The `dco` GitHub Action blocks unsigned commits at the PR boundary.
 - Do **not** add `Co-Authored-By: Claude` or any AI co-author trailer.
 - Do **not** add a "Generated with Claude Code" footer to commit messages or PR descriptions.
-- Match the existing commit style: lowercase, scoped where useful, e.g. `feat(unit-5): ...`, `fix(invoice-detail): ...`.
+- Match the existing commit style: lowercase, scoped where useful, e.g. `feat(invoices): ...`, `fix(invoice-detail): ...`, `chore: ...`.
+- Don't run `git commit` (or history-rewriting operations like `git filter-repo` / `git rebase`) without explicit user approval. Stage the change, show the diff, and ask.
 - Don't push to `origin` or open a PR without explicit user approval.
 
 ## Things to never do
@@ -91,6 +89,5 @@ CI runs all of these on every push and PR, plus a `docker build` smoke test.
 
 ## When you're stuck
 
-- The MVP plan ([docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md](docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md)) is the canonical source for *why* a thing is shaped the way it is.
 - For human-facing dev setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 - For self-host concerns, see [README.md](README.md).

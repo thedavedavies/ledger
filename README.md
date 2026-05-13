@@ -1,12 +1,14 @@
 # Ledger.
 
-> A minimal, self-hostable invoicing app. Create clients, create invoices, download PDFs. No auth, no SaaS chrome — just the boring useful parts.
+A self-hostable invoicing app. Create clients, generate invoices, download PDFs. Nothing else.
 
-<!-- TODO: replace with a real screenshot once Unit 9 (visual fidelity) lands -->
+Single-tenant, AGPL-licensed, written for people who want to send invoices from their own server without renting a SaaS to do it.
 
-## ⚠️ Read this before exposing it to the internet
+## Heads-up: there's no authentication yet
 
-This MVP has **no authentication**. The default Docker Compose binds the app to `127.0.0.1`. Do not change that to a public address without putting a reverse proxy with access control in front. Anyone who can reach the bound port can read and write every invoice and client record.
+This MVP ships without auth. The default Docker Compose binds the app to `127.0.0.1` so only your own machine can reach it. **Do not** put a public address in front of it without a reverse proxy with access control. Anyone who can hit the bound port can read and write every invoice and client.
+
+Auth is a planned feature. Until then, treat the running app like a local-only desktop tool.
 
 ## Self-host in 60 seconds
 
@@ -21,22 +23,52 @@ docker compose up -d
 
 Open `http://127.0.0.1:3000`. Three services come up:
 
-- `db` — Postgres 16, internal network only
-- `migrate` — runs schema migrations once and exits
-- `app` — the web app, bound to `127.0.0.1:3000` by default
+- `db`: Postgres 16, internal network only
+- `migrate`: runs schema migrations once and exits
+- `app`: the web app, bound to `127.0.0.1:3000`
 
 Stop with `docker compose down`. Data persists in named volumes (`pgdata`, `uploads`).
 
+## What's in it
+
+Shipped in the Community Edition:
+
+- Client Create, Read, Update, Delete (CRUD)
+- Invoice CRUD with line items and a single invoice-level tax rate
+- Invoice PDF download (multi-page, A4, rendered without a headless browser)
+- Singleton company profile (your business details appear on every invoice)
+- Year-scoped invoice with a configurable prefix (`INV-YYYY-NNNN`)
+- Self-host via `docker compose up`
+
+Planned, not shipped yet:
+
+- Authentication and multi-user accounts
+- Email send (SMTP / Resend)
+- Public invoice view link, with view tracking
+- Stripe / payment links and a mark-paid webhook
+- Monthly income chart
+- Per-line VAT and multi-jurisdiction tax handling
+
+Each is released as a separate change. The Community Edition stays AGPL and self-hostable as those features arrive.
+
+## Tech
+
+- **Runtime:** Node 22, TanStack Start v1 on Vite
+- **Database:** Postgres 16 via Drizzle ORM. Migrations are append-only SQL.
+- **PDF:** `@react-pdf/renderer`. No Chromium or headless browser.
+- **UI:** Tailwind v4 with Radix UI primitives, shadcn-style copy-in components
+- **Money:** stored as `bigint` minor units. No floats.
+
 ## Local development
 
-If you'd rather run the app on your host (faster HMR), bring up only Postgres in Docker:
+If you'd rather run the app on your host (faster HMR), bring up only Postgres in Docker.
 
-This project uses [pnpm](https://pnpm.io) (via [Corepack](https://nodejs.org/api/corepack.html)). The pinned version in `package.json` will be activated automatically, so you do not need to install pnpm globally.
+This project uses [pnpm](https://pnpm.io) via [Corepack](https://nodejs.org/api/corepack.html). The pinned version in `package.json` activates automatically; you don't need pnpm installed globally.
 
 ```bash
 cp .env.example .env
 docker compose -f docker/postgres-dev.yml up -d
-corepack enable                # one-time, activates pnpm from packageManager field
+corepack enable
 pnpm install --frozen-lockfile
 pnpm db:migrate
 pnpm dev
@@ -44,33 +76,7 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
-## Features
-
-### In this MVP (Community Edition)
-
-- ✅ Client CRUD
-- ✅ Invoice CRUD with line items and a single invoice-level tax rate
-- ✅ Invoice PDF download (multi-page, A4)
-- ✅ Singleton company profile (your business details on every invoice)
-- ✅ Year-scoped invoice numbering (`INV-YYYY-NNNN`)
-- ✅ Self-host via `docker compose up`
-
-### Planned, not yet shipped
-
-- ⏳ Authentication and multi-user accounts
-- ⏳ Email send (SMTP / Resend)
-- ⏳ Public invoice view link + view tracking
-- ⏳ Stripe / payment links + mark-paid webhooks
-- ⏳ Monthly income chart
-- ⏳ Per-line VAT and multi-jurisdiction tax handling
-
-Each of the above is a separate plan inside `docs/plans/`. The Community Edition stays AGPL-licensed and self-hostable as those land.
-
-## Hosted version
-
-A hosted SaaS is on the roadmap and will be a separate, private product that consumes this repo as a dependency. There is **no** SaaS today — self-host is the only path.
-
-## Backup and restore (self-host)
+## Backup and restore
 
 ```bash
 # Backup
@@ -82,18 +88,22 @@ cat invoice.sql | docker compose exec -T db psql -U postgres -d invoice
 docker run --rm -v ledger_uploads:/data -v "$PWD":/backup alpine tar xzf /backup/uploads.tar.gz -C /data
 ```
 
+## Security
+
+If you've found a vulnerability, please don't open a public issue. See [SECURITY.md](SECURITY.md) for how to report it privately.
+
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). All commits must include a `Signed-off-by` trailer (DCO). We do not use a CLA.
+See [CONTRIBUTING.md](CONTRIBUTING.md). All commits must include a `Signed-off-by` trailer (DCO). No CLA.
 
 ## License
 
-This project is licensed under **AGPL-3.0-or-later** — see the full text in [LICENSE](LICENSE). In plain English:
+AGPL-3.0-or-later. Full text in [LICENSE](LICENSE). In plain English:
 
-- You can self-host it, modify it, and use it as part of your business — including modifying it to suit your needs.
-- If you offer it as a network service to other people (i.e. you run a hosted version that other users access over a network), the AGPL requires you to make your modifications available under the same license.
+- You can self-host it, modify it, and use it inside your business.
+- If you offer it as a network service to other people (a hosted version they access over a network), the AGPL requires you to publish your modifications under the same license.
 
-A commercially-hosted version run by the maintainers is on the roadmap as a separate product. The Community Edition (this repo) remains AGPL-licensed and self-hostable indefinitely.
+A commercially-hosted version run by the maintainers is planned as a separate product. The Community Edition (this repo) stays AGPL and self-hostable.
 
 ## Code of Conduct
 
