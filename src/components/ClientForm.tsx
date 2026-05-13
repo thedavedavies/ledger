@@ -58,7 +58,6 @@ export function ClientForm({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Jane Doe"
                 />
               )}
             </FormField>
@@ -78,7 +77,6 @@ export function ClientForm({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Acme Inc."
                 />
               )}
             </FormField>
@@ -99,7 +97,6 @@ export function ClientForm({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="billing@example.com"
                 />
               )}
             </FormField>
@@ -119,7 +116,6 @@ export function ClientForm({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="123 Main St"
                 />
               )}
             </FormField>
@@ -218,7 +214,6 @@ export function ClientForm({
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Net 30 terms, PO number required, etc."
                 />
               )}
             </FormField>

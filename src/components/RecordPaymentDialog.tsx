@@ -153,7 +153,6 @@ export function RecordPaymentDialog({
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="0.00"
                     />
                   )}
                 </FormField>
@@ -201,7 +200,6 @@ export function RecordPaymentDialog({
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="e.g. BAC-7741"
                   />
                 )}
               </FormField>
