@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Project Stop hook for invoice-software.
+# Project Stop hook for ledger.
 #
 # If any .ts/.tsx files are dirty in the working tree, run `pnpm typecheck`
 # before letting the model report "done". Catches type errors at the end

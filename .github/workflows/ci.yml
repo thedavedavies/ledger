@@ -85,4 +85,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build production image
-        run: docker build -f docker/Dockerfile -t invoice-software:ci .
+        run: docker build -f docker/Dockerfile -t ledger:ci .
