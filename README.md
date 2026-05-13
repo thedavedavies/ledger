@@ -13,8 +13,8 @@ This MVP has **no authentication**. The default Docker Compose binds the app to 
 Requires Docker.
 
 ```bash
-git clone https://github.com/thedavedavies/invoice-software.git
-cd invoice-software
+git clone https://github.com/thedavedavies/ledger.git
+cd ledger
 cp .env.example .env
 docker compose up -d
 ```
@@ -75,11 +75,11 @@ A hosted SaaS is on the roadmap and will be a separate, private product that con
 ```bash
 # Backup
 docker compose exec db pg_dump -U postgres invoice > invoice.sql
-docker run --rm -v invoice-software_uploads:/data -v "$PWD":/backup alpine tar czf /backup/uploads.tar.gz -C /data .
+docker run --rm -v ledger_uploads:/data -v "$PWD":/backup alpine tar czf /backup/uploads.tar.gz -C /data .
 
 # Restore
 cat invoice.sql | docker compose exec -T db psql -U postgres -d invoice
-docker run --rm -v invoice-software_uploads:/data -v "$PWD":/backup alpine tar xzf /backup/uploads.tar.gz -C /data
+docker run --rm -v ledger_uploads:/data -v "$PWD":/backup alpine tar xzf /backup/uploads.tar.gz -C /data
 ```
 
 ## Contributing

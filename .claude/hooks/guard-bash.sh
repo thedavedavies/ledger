@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Project PreToolUse:Bash guard for invoice-software.
+# Project PreToolUse:Bash guard for ledger.
 #
 # Blocks:
 #   1. --no-verify / --no-gpg-sign on git commit / git push

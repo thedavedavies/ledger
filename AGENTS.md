@@ -4,7 +4,7 @@ This file is the canonical guide for any AI agent (Claude Code, Cursor, Copilot,
 
 ## What this is
 
-`invoice-software` is a self-hostable, single-tenant invoicing app. Create clients, create invoices, download PDFs. **Community Edition** under AGPL-3.0-or-later. Full project framing: [docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md](docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md) and [README.md](README.md).
+`ledger` is a self-hostable, single-tenant invoicing app. Create clients, create invoices, download PDFs. **Community Edition** under AGPL-3.0-or-later. Full project framing: [docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md](docs/plans/2026-04-30-001-feat-mvp-invoicing-app-plan.md) and [README.md](README.md).
 
 **Out of scope for this repo:** hosted SaaS, billing, multi-tenant infrastructure. Those will live in a separate private overlay repo that consumes this one as a dependency. Do not embed hosted-only concerns (billing UI, multi-tenancy scaffolding, plan gating, telemetry to a private backend) in core.
 

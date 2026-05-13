@@ -137,7 +137,7 @@ Key research findings from the Phase 1 research pass (April 2026):
 ## Output Structure
 
 ```text
-invoice-software/
+ledger/
 ├── src/
 │   ├── routes/
 │   │   ├── __root.tsx                    # layout, nav, error boundary

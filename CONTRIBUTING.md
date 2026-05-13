@@ -19,8 +19,8 @@ We do **not** use a CLA. Contributors retain copyright over their work.
 Requires Node 22 (see `.nvmrc`) and either Docker (for Postgres) or a local Postgres on `127.0.0.1:5432`. The package manager is [pnpm](https://pnpm.io), activated automatically via Corepack from the `packageManager` field in `package.json`.
 
 ```bash
-git clone https://github.com/<your-fork>/invoice-software.git
-cd invoice-software
+git clone https://github.com/<your-fork>/ledger.git
+cd ledger
 cp .env.example .env
 # edit .env so DATABASE_URL points at a Postgres you can reach
 docker compose -f docker/postgres-dev.yml up -d   # optional; skip if you already run Postgres locally
