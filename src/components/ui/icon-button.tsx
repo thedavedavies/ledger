@@ -29,14 +29,22 @@ function IconButton({
   children,
   ...props
 }: IconButtonProps) {
+  const ariaDisabled = props["aria-disabled"]
+  const inactive =
+    props.disabled || ariaDisabled === true || ariaDisabled === "true"
+
+  const button = (
+    <Button {...props}>
+      {children}
+      <span className="sr-only">{label}</span>
+    </Button>
+  )
+
+  if (inactive) return button
+
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button {...props}>
-          {children}
-          <span className="sr-only">{label}</span>
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
       <TooltipContent side={tooltipSide}>{label}</TooltipContent>
     </Tooltip>
   )
