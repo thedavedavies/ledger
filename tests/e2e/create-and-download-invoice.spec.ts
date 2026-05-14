@@ -1,9 +1,16 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 
+// TanStack Start sets window.__TSR_ROUTER__ once the client router is mounted.
+// Waiting on it before interaction avoids racing hydration in the Vite dev server.
+async function gotoHydrated(page: Page, url: string) {
+  await page.goto(url)
+  await page.waitForFunction(() => '__TSR_ROUTER__' in window)
+}
+
 test('create invoice and download PDF', async ({ page }) => {
-  await page.goto('/clients/new')
+  await gotoHydrated(page, '/clients/new')
 
   await page.getByLabel('Contact name').fill('E2E Test Client')
   await page.getByLabel('Email').fill('e2e@test.com')
@@ -11,7 +18,7 @@ test('create invoice and download PDF', async ({ page }) => {
 
   await page.waitForURL(/\/clients$/)
 
-  await page.goto('/invoices/new')
+  await gotoHydrated(page, '/invoices/new')
 
   await page.getByLabel('Client').click()
   await page.getByRole('option', { name: 'E2E Test Client' }).click()
