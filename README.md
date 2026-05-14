@@ -23,7 +23,7 @@ docker compose up -d
 
 Open `http://127.0.0.1:3000`. Three services come up:
 
-- `db`: Postgres 16, internal network only
+- `db`: Postgres 18, internal network only
 - `migrate`: runs schema migrations once and exits
 - `app`: the web app, bound to `127.0.0.1:3000`
 
@@ -53,8 +53,8 @@ Each is released as a separate change. The Community Edition stays AGPL and self
 
 ## Tech
 
-- **Runtime:** Node 22, TanStack Start v1 on Vite
-- **Database:** Postgres 16 via Drizzle ORM. Migrations are append-only SQL.
+- **Runtime:** Node 24, TanStack Start v1 on Vite
+- **Database:** Postgres 18 via Drizzle ORM. Migrations are append-only SQL.
 - **PDF:** `@react-pdf/renderer`. No Chromium or headless browser.
 - **UI:** Tailwind v4 with Radix UI primitives, shadcn-style copy-in components
 - **Money:** stored as `bigint` minor units. No floats.

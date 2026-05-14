@@ -22,7 +22,7 @@ No CLA. Contributors keep copyright over their work.
 
 ## Dev setup
 
-Requires Node 22 (see `.nvmrc`) and either Docker (for Postgres) or a local Postgres on `127.0.0.1:5432`. The package manager is [pnpm](https://pnpm.io), activated via Corepack from the `packageManager` field in `package.json`.
+Requires Node 24 (see `.nvmrc`) and either Docker (for Postgres) or a local Postgres on `127.0.0.1:5432`. The package manager is [pnpm](https://pnpm.io), activated via Corepack from the `packageManager` field in `package.json`.
 
 ```bash
 git clone https://github.com/<your-fork>/ledger.git
