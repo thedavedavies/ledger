@@ -58,7 +58,10 @@ function NewInvoicePage() {
               return
             }
             toast.success('Invoice created')
-            await navigate({ to: '/' })
+            await navigate({
+              to: '/invoices/$invoiceId',
+              params: { invoiceId: result.invoice.id },
+            })
           } catch {
             toast.error('Something went wrong. Please try again.')
           }
