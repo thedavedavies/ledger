@@ -5,7 +5,7 @@ import path from 'node:path'
 test('create invoice and download PDF', async ({ page }) => {
   await page.goto('/clients/new')
 
-  await page.getByLabel('Name').fill('E2E Test Client')
+  await page.getByLabel('Contact name').fill('E2E Test Client')
   await page.getByLabel('Email').fill('e2e@test.com')
   await page.getByRole('button', { name: 'Create client' }).click()
 
@@ -25,8 +25,9 @@ test('create invoice and download PDF', async ({ page }) => {
 
   await page.waitForURL(/\/invoices\/[a-f0-9-]+$/)
 
+  await page.getByRole('button', { name: 'More actions' }).click()
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('link', { name: /download pdf/i }).click()
+  await page.getByRole('menuitem', { name: /download pdf/i }).click()
   const download = await downloadPromise
 
   const downloadPath = path.join('tests/e2e/downloads', download.suggestedFilename())
