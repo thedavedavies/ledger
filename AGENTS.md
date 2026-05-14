@@ -18,7 +18,7 @@ This file is the canonical guide for any AI agent (Claude Code, Cursor, Copilot,
 - **Tailwind v4** + **Radix UI** (shadcn-style components copied into `src/components/ui/`)
 - **Zod** for validation; **Decimal.js** for quantity math
 - **Vitest** for unit + integration tests; **Playwright** for end-to-end
-- **ESLint 9** + **Prettier 3**; Node 22 (see `.nvmrc`)
+- **ESLint 10** + **Prettier 3**; Node 22 (see `.nvmrc`)
 
 ## Where code lives
 

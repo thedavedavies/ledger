@@ -99,3 +99,6 @@ desktop.ini
 
 # Local agent notes (per-machine, not committed)
 AGENTS.local.md
+
+# Compound-engineering review/scratch artifacts (per-run, not committed)
+.context/

@@ -4,7 +4,15 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import prettier from 'eslint-config-prettier'
 
 export default tseslint.config(
-  { ignores: ['dist/', 'src/routeTree.gen.ts'] },
+  {
+    ignores: [
+      'dist/',
+      'playwright-report/',
+      'test-results/',
+      'tests/e2e/downloads/',
+      'src/routeTree.gen.ts',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
