@@ -49,57 +49,45 @@ describe('companyProfileInput', () => {
   })
 
   it('accepts an empty email (opt-out)', () => {
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, email: '' }).success,
-    ).toBe(true)
+    expect(companyProfileInput.safeParse({ ...validProfile, email: '' }).success).toBe(true)
   })
 
   it('rejects a malformed email', () => {
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, email: 'not-an-email' }).success,
-    ).toBe(false)
+    expect(companyProfileInput.safeParse({ ...validProfile, email: 'not-an-email' }).success).toBe(
+      false,
+    )
   })
 
   it('rejects an unknown currency code', () => {
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, defaultCurrency: 'XYZ' })
-        .success,
-    ).toBe(false)
+    expect(companyProfileInput.safeParse({ ...validProfile, defaultCurrency: 'XYZ' }).success).toBe(
+      false,
+    )
   })
 
   it('rejects a tax rate above 100', () => {
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, taxRate: '150' }).success,
-    ).toBe(false)
+    expect(companyProfileInput.safeParse({ ...validProfile, taxRate: '150' }).success).toBe(false)
   })
 
   it('rejects a negative tax rate', () => {
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, taxRate: '-5' }).success,
-    ).toBe(false)
+    expect(companyProfileInput.safeParse({ ...validProfile, taxRate: '-5' }).success).toBe(false)
   })
 
   it('treats blank tax rate as valid (defaults applied)', () => {
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, taxRate: '' }).success,
-    ).toBe(true)
+    expect(companyProfileInput.safeParse({ ...validProfile, taxRate: '' }).success).toBe(true)
   })
 
   it('rejects an invoice prefix containing whitespace or symbols', () => {
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, invoicePrefix: 'IN V' })
-        .success,
-    ).toBe(false)
-    expect(
-      companyProfileInput.safeParse({ ...validProfile, invoicePrefix: 'IN/V' })
-        .success,
-    ).toBe(false)
+    expect(companyProfileInput.safeParse({ ...validProfile, invoicePrefix: 'IN V' }).success).toBe(
+      false,
+    )
+    expect(companyProfileInput.safeParse({ ...validProfile, invoicePrefix: 'IN/V' }).success).toBe(
+      false,
+    )
   })
 
   it('accepts an invoice prefix with letters, numbers, and hyphens', () => {
     expect(
-      companyProfileInput.safeParse({ ...validProfile, invoicePrefix: 'INV-2026' })
-        .success,
+      companyProfileInput.safeParse({ ...validProfile, invoicePrefix: 'INV-2026' }).success,
     ).toBe(true)
   })
 })
@@ -127,9 +115,7 @@ describe('clientInput', () => {
 
 describe('invoiceLineInput', () => {
   it('requires a description', () => {
-    expect(
-      invoiceLineInput.safeParse({ ...validLine, description: '' }).success,
-    ).toBe(false)
+    expect(invoiceLineInput.safeParse({ ...validLine, description: '' }).success).toBe(false)
   })
 
   it('rejects quantity of 0 or below', () => {
@@ -156,22 +142,16 @@ describe('invoiceInput', () => {
   })
 
   it('rejects a non-UUID clientId', () => {
-    expect(
-      invoiceInput.safeParse({ ...validInvoice, clientId: 'not-uuid' }).success,
-    ).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, clientId: 'not-uuid' }).success).toBe(false)
   })
 
   it('requires at least one line item', () => {
-    expect(
-      invoiceInput.safeParse({ ...validInvoice, lineItems: [] }).success,
-    ).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, lineItems: [] }).success).toBe(false)
   })
 
   it('caps line items at 100', () => {
     const tooMany = Array.from({ length: 101 }, () => validLine)
-    expect(
-      invoiceInput.safeParse({ ...validInvoice, lineItems: tooMany }).success,
-    ).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, lineItems: tooMany }).success).toBe(false)
   })
 
   it('rejects a tax rate outside 0–100', () => {
@@ -221,9 +201,7 @@ describe('paymentInput', () => {
   })
 
   it('rejects a non-UUID invoiceId', () => {
-    expect(
-      paymentInput.safeParse({ ...validPayment, invoiceId: 'not-uuid' }).success,
-    ).toBe(false)
+    expect(paymentInput.safeParse({ ...validPayment, invoiceId: 'not-uuid' }).success).toBe(false)
   })
 
   it('accepts each canonical payment method', () => {

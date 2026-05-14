@@ -8,7 +8,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d invoice"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d invoice']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,7 +25,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: "no"
+    restart: 'no'
 
   app:
     build:
@@ -34,11 +34,11 @@ services:
     command: node scripts/server.mjs
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/invoice
-      PORT: "3000"
+      PORT: '3000'
       UPLOADS_DIR: /app/uploads
-      PDF_RENDER_CONCURRENCY: "4"
+      PDF_RENDER_CONCURRENCY: '4'
     ports:
-      - "${BIND_HOST:-127.0.0.1}:${PORT:-3000}:3000"
+      - '${BIND_HOST:-127.0.0.1}:${PORT:-3000}:3000'
     volumes:
       - uploads:/app/uploads
     depends_on:

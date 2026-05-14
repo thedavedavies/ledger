@@ -1,12 +1,8 @@
-import * as React from "react"
+import * as React from 'react'
 
-import { Button, type buttonVariants } from "#/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "#/components/ui/tooltip"
-import type { VariantProps } from "class-variance-authority"
+import { Button, type buttonVariants } from '#/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '#/components/ui/tooltip'
+import type { VariantProps } from 'class-variance-authority'
 
 /**
  * Icon-only button with a built-in tooltip and a visually hidden label.
@@ -17,21 +13,15 @@ import type { VariantProps } from "class-variance-authority"
  *
  * Pass the icon (and only the icon) as `children`.
  */
-type IconButtonProps = Omit<React.ComponentProps<"button">, "aria-label"> &
+type IconButtonProps = Omit<React.ComponentProps<'button'>, 'aria-label'> &
   VariantProps<typeof buttonVariants> & {
     label: string
-    tooltipSide?: "top" | "right" | "bottom" | "left"
+    tooltipSide?: 'top' | 'right' | 'bottom' | 'left'
   }
 
-function IconButton({
-  label,
-  tooltipSide = "top",
-  children,
-  ...props
-}: IconButtonProps) {
-  const ariaDisabled = props["aria-disabled"]
-  const inactive =
-    props.disabled || ariaDisabled === true || ariaDisabled === "true"
+function IconButton({ label, tooltipSide = 'top', children, ...props }: IconButtonProps) {
+  const ariaDisabled = props['aria-disabled']
+  const inactive = props.disabled || ariaDisabled === true || ariaDisabled === 'true'
 
   const button = (
     <Button {...props}>

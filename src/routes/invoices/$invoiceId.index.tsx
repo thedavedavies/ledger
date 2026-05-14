@@ -37,11 +37,7 @@ import { buildInvoiceActivity } from '#/lib/invoice-activity'
 import { formatMoney } from '#/lib/money'
 import { timeAgo } from '#/lib/time-ago'
 import { getCompanyProfile } from '#/server/settings.fn'
-import {
-  getInvoice,
-  deleteInvoice,
-  updateInvoiceStatus,
-} from '#/server/invoices.fn'
+import { getInvoice, deleteInvoice, updateInvoiceStatus } from '#/server/invoices.fn'
 import { listPayments, deletePayment } from '#/server/payments.fn'
 import type { InvoiceStatus } from '#/server/schema'
 
@@ -90,14 +86,10 @@ function InvoiceViewPage() {
   const currency = profile.defaultCurrency || 'USD'
   const fmt = (cents: bigint) => formatMoney(cents, currency)
 
-  const paidCents = payments.reduce(
-    (sum, p) => sum + p.amountCents,
-    0n,
-  )
+  const paidCents = payments.reduce((sum, p) => sum + p.amountCents, 0n)
   const balanceDueCents = inv.totalCents - paidCents
   const isFullyPaid = paidCents >= inv.totalCents && inv.totalCents > 0n
-  const isPartiallyPaid =
-    paidCents > 0n && paidCents < inv.totalCents
+  const isPartiallyPaid = paidCents > 0n && paidCents < inv.totalCents
 
   async function handleDelete() {
     if (!inv) return
@@ -173,19 +165,13 @@ function InvoiceViewPage() {
       <div className="flex items-start justify-between gap-6 print:hidden">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="font-serif text-3xl font-normal tracking-tight">
-              {inv.number}
-            </h1>
+            <h1 className="font-serif text-3xl font-normal tracking-tight">{inv.number}</h1>
             <span className={`status-pill ${STATUS_STYLES[inv.status]}`}>
               {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
             </span>
-            {isPartiallyPaid && (
-              <span className="status-pill status-overdue">Partially paid</span>
-            )}
+            {isPartiallyPaid && <span className="status-pill status-overdue">Partially paid</span>}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {inv.client?.name}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{inv.client?.name}</p>
         </div>
         <div className="flex items-center justify-end gap-2">
           {inv.status === 'draft' && (
@@ -194,29 +180,21 @@ function InvoiceViewPage() {
               {sending ? 'Sending…' : 'Send'}
             </Button>
           )}
-          {(inv.status === 'sent' || inv.status === 'paid') &&
-            balanceDueCents > 0n && (
-              <Button onClick={() => setShowRecordPayment(true)}>
-                <Plus className="size-4" />
-                Record payment
-              </Button>
-            )}
+          {(inv.status === 'sent' || inv.status === 'paid') && balanceDueCents > 0n && (
+            <Button onClick={() => setShowRecordPayment(true)}>
+              <Plus className="size-4" />
+              Record payment
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="More actions"
-              >
+              <Button variant="outline" size="icon" aria-label="More actions">
                 <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>
-                <Link
-                  to="/invoices/$invoiceId/edit"
-                  params={{ invoiceId: inv.id }}
-                >
+                <Link to="/invoices/$invoiceId/edit" params={{ invoiceId: inv.id }}>
                   <Pencil className="size-4" />
                   Edit
                 </Link>
@@ -228,10 +206,7 @@ function InvoiceViewPage() {
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Change status</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
-                  <DropdownMenuRadioGroup
-                    value={inv.status}
-                    onValueChange={handleStatusChange}
-                  >
+                  <DropdownMenuRadioGroup value={inv.status} onValueChange={handleStatusChange}>
                     {STATUSES.map((s) => (
                       <DropdownMenuRadioItem key={s} value={s}>
                         {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -241,10 +216,7 @@ function InvoiceViewPage() {
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setShowDelete(true)}
-              >
+              <DropdownMenuItem variant="destructive" onSelect={() => setShowDelete(true)}>
                 <X className="size-4" />
                 Delete
               </DropdownMenuItem>
@@ -262,12 +234,10 @@ function InvoiceViewPage() {
                 From
               </h3>
               <div className="mt-1 text-sm">
-                <p className="font-medium">{profile.businessName || '—'}</p>
+                <p className="font-medium">{profile.businessName || '-'}</p>
                 {profile.address && <p>{profile.address}</p>}
                 {(profile.city || profile.postcode) && (
-                  <p>
-                    {[profile.city, profile.postcode].filter(Boolean).join(', ')}
-                  </p>
+                  <p>{[profile.city, profile.postcode].filter(Boolean).join(', ')}</p>
                 )}
                 {profile.country && <p>{profile.country}</p>}
                 {profile.email && <p>{profile.email}</p>}
@@ -279,14 +249,10 @@ function InvoiceViewPage() {
                 Bill to
               </h3>
               <div className="mt-1 text-sm">
-                <p className="font-medium">{inv.client?.name || '—'}</p>
+                <p className="font-medium">{inv.client?.name || '-'}</p>
                 {inv.client?.address && <p>{inv.client.address}</p>}
                 {(inv.client?.city || inv.client?.postcode) && (
-                  <p>
-                    {[inv.client.city, inv.client.postcode]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </p>
+                  <p>{[inv.client.city, inv.client.postcode].filter(Boolean).join(', ')}</p>
                 )}
                 {inv.client?.country && <p>{inv.client.country}</p>}
                 {inv.client?.email && <p>{inv.client.email}</p>}
@@ -323,9 +289,7 @@ function InvoiceViewPage() {
                 {inv.lineItems.map((li) => (
                   <TableRow key={li.id}>
                     <TableCell>{li.description}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {li.quantity}
-                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{li.quantity}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {fmt(li.unitPriceCents)}
                     </TableCell>
@@ -350,9 +314,7 @@ function InvoiceViewPage() {
                 <span className="text-muted-foreground">
                   Tax{Number(inv.taxRate) > 0 ? ` ${inv.taxRate}%` : ''}
                 </span>
-                <span className="tabular-nums font-serif text-[14px]">
-                  {fmt(inv.taxCents)}
-                </span>
+                <span className="tabular-nums font-serif text-[14px]">{fmt(inv.taxCents)}</span>
               </div>
               <div className="flex justify-between border-t border-foreground pt-2.5">
                 <span className="text-[14px] font-semibold">Total</span>
@@ -378,9 +340,7 @@ function InvoiceViewPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[14px] font-semibold">
-                      Balance due
-                    </span>
+                    <span className="text-[14px] font-semibold">Balance due</span>
                     <span className="tabular-nums font-serif text-[24px] tracking-tight">
                       {fmt(balanceDueCents)}
                     </span>
@@ -431,16 +391,14 @@ function InvoiceViewPage() {
                   >
                     <span>{formatDate(p.paidAt)}</span>
                     <div>
-                      <p className="text-foreground">{p.method || '—'}</p>
+                      <p className="text-foreground">{p.method || '-'}</p>
                       {(p.reference || p.notes) && (
                         <p className="text-xs text-muted-foreground">
                           {[p.reference, p.notes].filter(Boolean).join(' · ')}
                         </p>
                       )}
                     </div>
-                    <span className="text-right tabular-nums font-serif">
-                      {fmt(p.amountCents)}
-                    </span>
+                    <span className="text-right tabular-nums font-serif">{fmt(p.amountCents)}</span>
                     <IconButton
                       type="button"
                       variant="ghost"
@@ -457,10 +415,7 @@ function InvoiceViewPage() {
             )}
 
             {isFullyPaid && (
-              <p
-                className="mt-3 text-xs"
-                style={{ color: 'var(--color-status-paid)' }}
-              >
+              <p className="mt-3 text-xs" style={{ color: 'var(--color-status-paid)' }}>
                 ● Invoice fully paid.
               </p>
             )}
@@ -483,19 +438,14 @@ function InvoiceViewPage() {
           </h3>
           <div className="border-t border-border pt-4">
             <ul className="relative space-y-4 pl-4">
-              <span
-                aria-hidden
-                className="absolute top-2 bottom-2 left-[3px] w-px bg-border"
-              />
+              <span aria-hidden className="absolute top-2 bottom-2 left-[3px] w-px bg-border" />
               {buildInvoiceActivity(inv, payments, fmt).map((event, i) => (
                 <li key={i} className="relative">
                   <span
                     aria-hidden
                     className="absolute -left-4 top-1.5 size-1.5 rounded-full bg-foreground"
                   />
-                  <p className="text-[11px] text-muted-foreground">
-                    {timeAgo(event.at)}
-                  </p>
+                  <p className="text-[11px] text-muted-foreground">{timeAgo(event.at)}</p>
                   <p className="text-[13px] text-foreground">{event.label}</p>
                 </li>
               ))}
@@ -514,54 +464,36 @@ function InvoiceViewPage() {
         onOpenChange={setShowRecordPayment}
       />
 
-      <Dialog
-        open={showDelete}
-        onOpenChange={(open) => !open && setShowDelete(false)}
-      >
+      <Dialog open={showDelete} onOpenChange={(open) => !open && setShowDelete(false)}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>Delete invoice {inv.number}?</DialogTitle>
             <DialogDescription>
-              This will remove the invoice and all line items permanently. This
-              cannot be undone.
+              This will remove the invoice and all line items permanently. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDelete(false)}
-              disabled={deleting}
-            >
+            <Button variant="outline" onClick={() => setShowDelete(false)} disabled={deleting}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? 'Deleting…' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={!!deletePaymentId}
-        onOpenChange={(open) => !open && setDeletePaymentId(null)}
-      >
+      <Dialog open={!!deletePaymentId} onOpenChange={(open) => !open && setDeletePaymentId(null)}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>Remove payment?</DialogTitle>
             <DialogDescription>
-              This will remove the payment record permanently. The invoice
-              balance will be recalculated.
+              This will remove the payment record permanently. The invoice balance will be
+              recalculated.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeletePaymentId(null)}
-            >
+            <Button variant="outline" onClick={() => setDeletePaymentId(null)}>
               Cancel
             </Button>
             <Button
@@ -580,12 +512,9 @@ function InvoiceViewPage() {
 function InvoiceNotFound() {
   return (
     <div className="mt-16 flex flex-col items-center justify-center text-center">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Invoice not found
-      </h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Invoice not found</h1>
       <p className="mt-2 text-muted-foreground">
-        The invoice you&apos;re looking for doesn&apos;t exist or has been
-        deleted.
+        The invoice you&apos;re looking for doesn&apos;t exist or has been deleted.
       </p>
     </div>
   )

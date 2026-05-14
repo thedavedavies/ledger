@@ -57,9 +57,7 @@ describe('timeAgo', () => {
   })
 
   it('returns ordinal date with year for prior years', () => {
-    expect(timeAgo(new Date('2025-12-25T14:00:00Z'), now)).toBe(
-      '25th December 2025',
-    )
+    expect(timeAgo(new Date('2025-12-25T14:00:00Z'), now)).toBe('25th December 2025')
   })
 
   it('handles teen-day suffixes', () => {

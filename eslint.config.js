@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import prettier from 'eslint-config-prettier'
 
 export default tseslint.config(
-  { ignores: ['dist/', 'src/routeTree.gen.ts', '.sandcastle/'] },
+  { ignores: ['dist/', 'src/routeTree.gen.ts'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

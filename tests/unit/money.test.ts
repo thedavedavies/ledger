@@ -127,10 +127,7 @@ describe('computeLineTotalCents', () => {
 
 describe('computeInvoiceTotals', () => {
   it('computes 1-line invoice, qty 1, price 100.00, tax 0%', () => {
-    const result = computeInvoiceTotals(
-      [{ quantity: '1', unitPriceCents: 10000n }],
-      0,
-    )
+    const result = computeInvoiceTotals([{ quantity: '1', unitPriceCents: 10000n }], 0)
     expect(result.subtotalCents).toBe(10000n)
     expect(result.taxCents).toBe(0n)
     expect(result.totalCents).toBe(10000n)
@@ -159,10 +156,7 @@ describe('computeInvoiceTotals', () => {
   })
 
   it('handles 0% tax rate', () => {
-    const result = computeInvoiceTotals(
-      [{ quantity: '2', unitPriceCents: 5000n }],
-      0,
-    )
+    const result = computeInvoiceTotals([{ quantity: '2', unitPriceCents: 5000n }], 0)
     expect(result.taxCents).toBe(0n)
     expect(result.totalCents).toBe(10000n)
   })
@@ -185,10 +179,7 @@ describe('computeInvoiceTotals', () => {
   it('tax rounding: half-away-from-zero for tax calculation', () => {
     // subtotal = 101, tax rate = 3% → taxBp = 300
     // taxCents = (101 * 300) / 10000 = 30300/10000 = 3.03 → 3
-    const result = computeInvoiceTotals(
-      [{ quantity: '1', unitPriceCents: 101n }],
-      3,
-    )
+    const result = computeInvoiceTotals([{ quantity: '1', unitPriceCents: 101n }], 3)
     expect(result.taxCents).toBe(3n)
     expect(result.totalCents).toBe(104n)
   })
@@ -196,10 +187,7 @@ describe('computeInvoiceTotals', () => {
   it('tax rounding boundary: exact half rounds up', () => {
     // subtotal = 100, tax = 15% → taxBp = 1500
     // taxCents = (100 * 1500) / 10000 = 150000/10000 = 15 exact
-    const result = computeInvoiceTotals(
-      [{ quantity: '1', unitPriceCents: 100n }],
-      15,
-    )
+    const result = computeInvoiceTotals([{ quantity: '1', unitPriceCents: 100n }], 15)
     expect(result.taxCents).toBe(15n)
     expect(result.totalCents).toBe(115n)
   })

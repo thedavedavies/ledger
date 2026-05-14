@@ -76,9 +76,7 @@ describe('companyProfileInput validator', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(
-        'Tax rate must be between 0 and 100',
-      )
+      expect(result.error.issues[0]?.message).toBe('Tax rate must be between 0 and 100')
     }
   })
 

@@ -33,12 +33,8 @@ function EditInvoicePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Edit {inv.number}
-      </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Update invoice details and line items.
-      </p>
+      <h1 className="text-2xl font-semibold tracking-tight">Edit {inv.number}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Update invoice details and line items.</p>
 
       <InvoiceForm
         defaultValues={{
@@ -80,12 +76,9 @@ function EditInvoicePage() {
 function InvoiceNotFound() {
   return (
     <div className="mt-16 flex flex-col items-center justify-center text-center">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Invoice not found
-      </h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Invoice not found</h1>
       <p className="mt-2 text-muted-foreground">
-        The invoice you&apos;re looking for doesn&apos;t exist or has been
-        deleted.
+        The invoice you&apos;re looking for doesn&apos;t exist or has been deleted.
       </p>
     </div>
   )

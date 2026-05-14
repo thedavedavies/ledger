@@ -4,21 +4,19 @@ import { db } from './db'
 import { companyProfile } from './schema'
 import { companyProfileInput } from '#/lib/validators'
 
-export const getCompanyProfile = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    const row = await db
-      .select()
-      .from(companyProfile)
-      .where(eq(companyProfile.id, 1))
-      .then((rows) => rows[0])
+export const getCompanyProfile = createServerFn({ method: 'GET' }).handler(async () => {
+  const row = await db
+    .select()
+    .from(companyProfile)
+    .where(eq(companyProfile.id, 1))
+    .then((rows) => rows[0])
 
-    if (!row) {
-      throw new Error('Company profile not found — run migrations first')
-    }
+  if (!row) {
+    throw new Error('Company profile not found. Run migrations first.')
+  }
 
-    return row
-  },
-)
+  return row
+})
 
 export const updateCompanyProfile = createServerFn({ method: 'POST' })
   .inputValidator(companyProfileInput)

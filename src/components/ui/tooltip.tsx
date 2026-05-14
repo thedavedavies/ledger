@@ -1,26 +1,20 @@
-import * as React from "react"
-import { Tooltip as TooltipPrimitive } from "radix-ui"
+import * as React from 'react'
+import { Tooltip as TooltipPrimitive } from 'radix-ui'
 
-import { cn } from "#/lib/utils.ts"
+import { cn } from '#/lib/utils.ts'
 
 function TooltipProvider({
   delayDuration = 200,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-  return (
-    <TooltipPrimitive.Provider delayDuration={delayDuration} {...props} />
-  )
+  return <TooltipPrimitive.Provider delayDuration={delayDuration} {...props} />
 }
 
-function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return <TooltipPrimitive.Root {...props} />
 }
 
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
   return <TooltipPrimitive.Trigger {...props} />
 }
 
@@ -34,8 +28,8 @@ function TooltipContent({
       <TooltipPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 overflow-hidden rounded-md bg-foreground px-2 py-1 text-[11px] font-medium tracking-wide text-background shadow-sm",
-          "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0",
+          'z-50 overflow-hidden rounded-md bg-foreground px-2 py-1 text-[11px] font-medium tracking-wide text-background shadow-sm',
+          'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0',
           className,
         )}
         {...props}

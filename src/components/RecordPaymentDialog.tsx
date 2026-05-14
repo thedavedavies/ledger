@@ -23,11 +23,7 @@ import {
 } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
 import { toCents } from '#/lib/money'
-import {
-  PAYMENT_METHODS,
-  paymentInput,
-  type PaymentInput,
-} from '#/lib/validators'
+import { PAYMENT_METHODS, paymentInput, type PaymentInput } from '#/lib/validators'
 import { createPayment } from '#/server/payments.fn'
 
 interface Props {
@@ -122,10 +118,7 @@ export function RecordPaymentDialog({
           <div className="grid grid-cols-2 gap-4">
             <form.Field name="paidAt">
               {(field) => (
-                <FormField
-                  label="Date"
-                  error={field.state.meta.errorMap.onChange}
-                >
+                <FormField label="Date" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
                     <Input
                       {...props}
@@ -162,15 +155,9 @@ export function RecordPaymentDialog({
 
           <form.Field name="method">
             {(field) => (
-              <FormField
-                label="Method"
-                error={field.state.meta.errorMap.onChange}
-              >
+              <FormField label="Method" error={field.state.meta.errorMap.onChange}>
                 {(props) => (
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(v) => field.handleChange(v)}
-                  >
+                  <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
                     <SelectTrigger {...props} className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -253,10 +240,7 @@ export function RecordPaymentDialog({
   )
 }
 
-function formatRecordAmount(
-  amount: string,
-  formatCents: (cents: bigint) => string,
-): string {
+function formatRecordAmount(amount: string, formatCents: (cents: bigint) => string): string {
   const n = Number(amount)
   if (!isFinite(n) || n <= 0) return ''
   try {
@@ -265,4 +249,3 @@ function formatRecordAmount(
     return ''
   }
 }
-

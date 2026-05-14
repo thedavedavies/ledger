@@ -6,11 +6,11 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: invoice
     ports:
-      - "127.0.0.1:5432:5432"
+      - '127.0.0.1:5432:5432'
     volumes:
       - pgdata-dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d invoice"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d invoice']
       interval: 5s
       timeout: 5s
       retries: 5

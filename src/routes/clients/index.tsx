@@ -67,21 +67,12 @@ function ClientsListPage() {
                       {c.name}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {c.companyName || '—'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {c.email || '—'}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {c.invoiceCount}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{c.companyName || '-'}</TableCell>
+                  <TableCell className="text-muted-foreground">{c.email || '-'}</TableCell>
+                  <TableCell className="text-right tabular-nums">{c.invoiceCount}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link
-                        to="/clients/$clientId"
-                        params={{ clientId: c.id }}
-                      >
+                      <Link to="/clients/$clientId" params={{ clientId: c.id }}>
                         Edit
                       </Link>
                     </Button>
@@ -92,7 +83,6 @@ function ClientsListPage() {
           </Table>
         </div>
       )}
-
     </div>
   )
 }

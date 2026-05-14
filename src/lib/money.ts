@@ -42,10 +42,7 @@ export function currencySymbol(currency: string): string {
   }
 }
 
-export function computeLineTotalCents(
-  quantity: string,
-  unitPriceCents: bigint,
-): bigint {
+export function computeLineTotalCents(quantity: string, unitPriceCents: bigint): bigint {
   const qty = new Decimal(quantity)
   const price = new Decimal(unitPriceCents.toString())
   const total = qty.times(price)
@@ -61,9 +58,7 @@ export function computeInvoiceTotals(
   totalCents: bigint
   lineTotals: bigint[]
 } {
-  const lineTotals = lines.map((line) =>
-    computeLineTotalCents(line.quantity, line.unitPriceCents),
-  )
+  const lineTotals = lines.map((line) => computeLineTotalCents(line.quantity, line.unitPriceCents))
 
   const subtotalCents = lineTotals.reduce((sum, lt) => sum + lt, 0n)
 

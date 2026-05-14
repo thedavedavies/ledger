@@ -2,3 +2,6 @@ dist/
 node_modules/
 src/routeTree.gen.ts
 package-lock.json
+pnpm-lock.yaml
+drizzle/
+docs/plans/
