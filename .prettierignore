@@ -5,3 +5,7 @@ package-lock.json
 pnpm-lock.yaml
 drizzle/
 docs/plans/
+.context/
+playwright-report/
+test-results/
+tests/e2e/downloads/
