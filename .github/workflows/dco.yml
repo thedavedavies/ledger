@@ -18,7 +18,7 @@ jobs:
       - name: Skip DCO for Dependabot
         if: github.actor == 'dependabot[bot]'
         run: echo "Dependabot PR -- skipping DCO sign-off check."
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         if: github.actor != 'dependabot[bot]'
         with:
           fetch-depth: 0
