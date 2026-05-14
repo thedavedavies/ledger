@@ -5,9 +5,7 @@ vi.mock('#/server/db', () => ({
   db: {},
 }))
 
-const { InvoiceTemplate } = await import(
-  '#/server/pdf/invoice-template'
-)
+const { InvoiceTemplate } = await import('#/server/pdf/invoice-template')
 
 function makeProps(
   overrides: {
@@ -34,19 +32,10 @@ function makeProps(
     },
   ]
 
-  const subtotalCents = lineItems.reduce(
-    (s, li) => s + li.lineTotalCents,
-    0n,
-  )
+  const subtotalCents = lineItems.reduce((s, li) => s + li.lineTotalCents, 0n)
   const taxRate = overrides.taxRate ?? '0'
   const taxCents =
-    Number(taxRate) > 0
-      ? BigInt(
-          Math.round(
-            (Number(subtotalCents) * Number(taxRate)) / 100,
-          ),
-        )
-      : 0n
+    Number(taxRate) > 0 ? BigInt(Math.round((Number(subtotalCents) * Number(taxRate)) / 100)) : 0n
   const totalCents = subtotalCents + taxCents
 
   return {
@@ -92,7 +81,7 @@ describe('InvoiceTemplate', () => {
 })
 
 describe('PDF rendering', () => {
-  it('renders a single-line-item invoice — buffer starts with %PDF-', async () => {
+  it('renders a single-line-item invoice: buffer starts with %PDF-', async () => {
     const { renderToBuffer } = await import('@react-pdf/renderer')
     const props = makeProps()
     const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
@@ -102,7 +91,7 @@ describe('PDF rendering', () => {
     expect(header).toBe('%PDF-')
   }, 30_000)
 
-  it('renders with all optional fields — logo null, notes, tax', async () => {
+  it('renders with all optional fields: logo null, notes, tax', async () => {
     const { renderToBuffer } = await import('@react-pdf/renderer')
     const props = makeProps({
       notes: 'Payment within 14 days',
@@ -120,7 +109,7 @@ describe('PDF rendering', () => {
     const { renderToBuffer } = await import('@react-pdf/renderer')
     const lineItems = Array.from({ length: 10 }, (_, i) => ({
       id: String(i + 1),
-      description: `Service item ${i + 1} — detailed description of the work performed`,
+      description: `Service item ${i + 1}: detailed description of the work performed`,
       quantity: String(i + 1),
       unitPriceCents: BigInt((i + 1) * 5000),
       lineTotalCents: BigInt((i + 1) * (i + 1) * 5000),

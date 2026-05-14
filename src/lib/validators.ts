@@ -28,11 +28,7 @@ export const companyProfileInput = z.object({
   city: z.string().max(100, 'City must be 100 characters or fewer'),
   postcode: z.string().max(20, 'Postcode must be 20 characters or fewer'),
   country: z.string().max(100, 'Country must be 100 characters or fewer'),
-  email: z
-    .string()
-    .email('Invalid email address')
-    .or(z.literal(''))
-    .default(''),
+  email: z.string().email('Invalid email address').or(z.literal('')).default(''),
   phone: z.string().max(30, 'Phone must be 30 characters or fewer'),
   taxId: z.string().max(50, 'Tax ID must be 50 characters or fewer'),
   defaultCurrency: z.enum(CURRENCY_CODES as unknown as [string, ...string[]], {
@@ -63,15 +59,8 @@ export const clientInput = z.object({
     .string()
     .min(1, 'Contact name is required')
     .max(200, 'Name must be 200 characters or fewer'),
-  companyName: z
-    .string()
-    .max(200, 'Company name must be 200 characters or fewer')
-    .default(''),
-  email: z
-    .string()
-    .email('Invalid email address')
-    .or(z.literal(''))
-    .default(''),
+  companyName: z.string().max(200, 'Company name must be 200 characters or fewer').default(''),
+  email: z.string().email('Invalid email address').or(z.literal('')).default(''),
   address: z.string().max(500, 'Address must be 500 characters or fewer').default(''),
   city: z.string().max(100, 'City must be 100 characters or fewer').default(''),
   postcode: z.string().max(20, 'Postcode must be 20 characters or fewer').default(''),
@@ -87,26 +76,22 @@ export const invoiceLineInput = z.object({
     .string()
     .min(1, 'Description is required')
     .max(500, 'Description must be 500 characters or fewer'),
-  quantity: z
-    .string()
-    .refine(
-      (v) => {
-        if (v === '') return false
-        const n = Number(v)
-        return !isNaN(n) && n > 0
-      },
-      { message: 'Quantity must be greater than 0' },
-    ),
-  unitPrice: z
-    .string()
-    .refine(
-      (v) => {
-        if (v === '') return false
-        const n = Number(v)
-        return !isNaN(n) && n >= 0
-      },
-      { message: 'Unit price must be 0 or greater' },
-    ),
+  quantity: z.string().refine(
+    (v) => {
+      if (v === '') return false
+      const n = Number(v)
+      return !isNaN(n) && n > 0
+    },
+    { message: 'Quantity must be greater than 0' },
+  ),
+  unitPrice: z.string().refine(
+    (v) => {
+      if (v === '') return false
+      const n = Number(v)
+      return !isNaN(n) && n >= 0
+    },
+    { message: 'Unit price must be 0 or greater' },
+  ),
 })
 
 export type InvoiceLineInput = z.infer<typeof invoiceLineInput>
@@ -142,22 +127,17 @@ export const invoiceStatusInput = z.object({
 
 export const paymentInput = z.object({
   invoiceId: z.string().uuid(),
-  amount: z
-    .string()
-    .refine(
-      (v) => {
-        if (v === '') return false
-        const n = Number(v)
-        return !isNaN(n) && n > 0
-      },
-      { message: 'Amount must be greater than 0' },
-    ),
+  amount: z.string().refine(
+    (v) => {
+      if (v === '') return false
+      const n = Number(v)
+      return !isNaN(n) && n > 0
+    },
+    { message: 'Amount must be greater than 0' },
+  ),
   paidAt: z.string().min(1, 'Date is required'),
   method: z.string().max(100, 'Method must be 100 characters or fewer').default(''),
-  reference: z
-    .string()
-    .max(100, 'Reference must be 100 characters or fewer')
-    .default(''),
+  reference: z.string().max(100, 'Reference must be 100 characters or fewer').default(''),
   notes: z.string().max(2000, 'Notes must be 2000 characters or fewer').default(''),
 })
 

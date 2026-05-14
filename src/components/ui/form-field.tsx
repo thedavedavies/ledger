@@ -25,12 +25,7 @@ interface FormFieldProps {
   children: (props: FormFieldChildProps) => ReactNode
 }
 
-export function FormField({
-  label,
-  trailing,
-  error,
-  children,
-}: FormFieldProps) {
+export function FormField({ label, trailing, error, children }: FormFieldProps) {
   const reactId = useId()
   const id = `field-${reactId}`
   const errorId = error ? `${id}-error` : undefined
@@ -39,9 +34,7 @@ export function FormField({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label htmlFor={id}>{label}</Label>
-        {trailing && (
-          <span className="text-[11px] text-muted-foreground">{trailing}</span>
-        )}
+        {trailing && <span className="text-[11px] text-muted-foreground">{trailing}</span>}
       </div>
       {children({
         id,

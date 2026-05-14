@@ -4,19 +4,11 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { DocumentProps } from '@react-pdf/renderer'
 import { eq } from 'drizzle-orm'
 import { db } from '#/server/db'
-import {
-  invoice,
-  invoiceLineItem,
-  client,
-  companyProfile,
-} from '#/server/schema'
+import { invoice, invoiceLineItem, client, companyProfile } from '#/server/schema'
 import { InvoiceTemplate } from './invoice-template'
 import type { InvoiceTemplateProps } from './invoice-template'
 
-const PDF_RENDER_CONCURRENCY = Math.max(
-  1,
-  Number(process.env['PDF_RENDER_CONCURRENCY']) || 4,
-)
+const PDF_RENDER_CONCURRENCY = Math.max(1, Number(process.env['PDF_RENDER_CONCURRENCY']) || 4)
 const MAX_QUEUE = 16
 
 let active = 0
@@ -150,14 +142,10 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
   return { props, invoiceNumber: inv.number }
 }
 
-export async function renderInvoicePdf(
-  props: InvoiceTemplateProps,
-): Promise<Buffer> {
+export async function renderInvoicePdf(props: InvoiceTemplateProps): Promise<Buffer> {
   await acquireSemaphore()
   try {
-    const element = InvoiceTemplate(
-      props,
-    ) as React.ReactElement<DocumentProps>
+    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
     const buffer = await renderToBuffer(element)
     return Buffer.from(buffer)
   } finally {

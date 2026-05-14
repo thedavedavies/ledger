@@ -1,9 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  loadInvoiceData,
-  renderInvoicePdf,
-  TooManyRequestsError,
-} from '#/server/pdf/render'
+import { loadInvoiceData, renderInvoicePdf, TooManyRequestsError } from '#/server/pdf/render'
 
 export const Route = createFileRoute('/api/invoices/$invoiceId/pdf')({
   server: {

@@ -31,9 +31,7 @@ describe('buildInvoiceActivity', () => {
       method: '',
     }
     const events = buildInvoiceActivity(baseInvoice, [payment], fmt)
-    const paymentEvent = events.find((e) =>
-      e.label.startsWith('Payment recorded'),
-    )
+    const paymentEvent = events.find((e) => e.label.startsWith('Payment recorded'))
     expect(paymentEvent?.at).toEqual(new Date('2026-05-09T17:30:00Z'))
   })
 
@@ -68,34 +66,18 @@ describe('buildInvoiceActivity', () => {
   })
 
   it('appends "Marked as paid" when the invoice is paid', () => {
-    const events = buildInvoiceActivity(
-      { ...baseInvoice, status: 'paid' },
-      [],
-      fmt,
-    )
+    const events = buildInvoiceActivity({ ...baseInvoice, status: 'paid' }, [], fmt)
     expect(events.some((e) => e.label === 'Marked as paid')).toBe(true)
   })
 
   it('appends "Voided" when the invoice is void', () => {
-    const events = buildInvoiceActivity(
-      { ...baseInvoice, status: 'void' },
-      [],
-      fmt,
-    )
+    const events = buildInvoiceActivity({ ...baseInvoice, status: 'void' }, [], fmt)
     expect(events.some((e) => e.label === 'Voided')).toBe(true)
   })
 
   it('does not append a status event for draft or sent', () => {
-    const draft = buildInvoiceActivity(
-      { ...baseInvoice, status: 'draft' },
-      [],
-      fmt,
-    )
-    const sent = buildInvoiceActivity(
-      { ...baseInvoice, status: 'sent' },
-      [],
-      fmt,
-    )
+    const draft = buildInvoiceActivity({ ...baseInvoice, status: 'draft' }, [], fmt)
+    const sent = buildInvoiceActivity({ ...baseInvoice, status: 'sent' }, [], fmt)
     expect(draft.map((e) => e.label)).toEqual(['Invoice created'])
     expect(sent.map((e) => e.label)).toEqual(['Invoice created'])
   })

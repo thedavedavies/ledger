@@ -144,10 +144,7 @@ describe('buildOutstandingInvoices', () => {
   it('subtracts payments from totals', () => {
     const result = buildOutstandingInvoices(
       [inv({ id: 'a', status: 'sent', totalCents: 100000n })],
-      [
-        pay({ invoiceId: 'a', amountCents: 30000n }),
-        pay({ invoiceId: 'a', amountCents: 20000n }),
-      ],
+      [pay({ invoiceId: 'a', amountCents: 30000n }), pay({ invoiceId: 'a', amountCents: 20000n })],
       ref,
     )
     expect(result[0]!.balanceCents).toBe(50000n)
@@ -230,14 +227,22 @@ describe('computeKpi', () => {
   it('sums outstanding and overdue from the prebuilt list', () => {
     const outstanding = [
       {
-        id: 'a', number: 'A', clientName: 'X',
-        issueDate: new Date(), dueDate: new Date(),
-        balanceCents: 50000n, isOverdue: true,
+        id: 'a',
+        number: 'A',
+        clientName: 'X',
+        issueDate: new Date(),
+        dueDate: new Date(),
+        balanceCents: 50000n,
+        isOverdue: true,
       },
       {
-        id: 'b', number: 'B', clientName: 'Y',
-        issueDate: new Date(), dueDate: new Date(),
-        balanceCents: 20000n, isOverdue: false,
+        id: 'b',
+        number: 'B',
+        clientName: 'Y',
+        issueDate: new Date(),
+        dueDate: new Date(),
+        balanceCents: 20000n,
+        isOverdue: false,
       },
     ]
     const kpi = computeKpi([], [], outstanding, ref)

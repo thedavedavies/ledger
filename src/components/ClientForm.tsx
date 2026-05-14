@@ -12,11 +12,7 @@ interface ClientFormProps {
   submitLabel: string
 }
 
-export function ClientForm({
-  defaultValues,
-  onSubmit,
-  submitLabel,
-}: ClientFormProps) {
+export function ClientForm({ defaultValues, onSubmit, submitLabel }: ClientFormProps) {
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
@@ -47,10 +43,7 @@ export function ClientForm({
       <div className="grid max-w-2xl gap-6">
         <form.Field name="name">
           {(field) => (
-            <FormField
-              label="Contact name"
-              error={field.state.meta.errorMap.onChange}
-            >
+            <FormField label="Contact name" error={field.state.meta.errorMap.onChange}>
               {(props) => (
                 <Input
                   {...props}
@@ -66,10 +59,7 @@ export function ClientForm({
 
         <form.Field name="companyName">
           {(field) => (
-            <FormField
-              label="Company name"
-              error={field.state.meta.errorMap.onChange}
-            >
+            <FormField label="Company name" error={field.state.meta.errorMap.onChange}>
               {(props) => (
                 <Input
                   {...props}
@@ -85,10 +75,7 @@ export function ClientForm({
 
         <form.Field name="email">
           {(field) => (
-            <FormField
-              label="Email"
-              error={field.state.meta.errorMap.onChange}
-            >
+            <FormField label="Email" error={field.state.meta.errorMap.onChange}>
               {(props) => (
                 <Input
                   {...props}
@@ -105,10 +92,7 @@ export function ClientForm({
 
         <form.Field name="address">
           {(field) => (
-            <FormField
-              label="Address"
-              error={field.state.meta.errorMap.onChange}
-            >
+            <FormField label="Address" error={field.state.meta.errorMap.onChange}>
               {(props) => (
                 <Input
                   {...props}
@@ -125,10 +109,7 @@ export function ClientForm({
         <div className="grid grid-cols-3 gap-4">
           <form.Field name="city">
             {(field) => (
-              <FormField
-                label="City"
-                error={field.state.meta.errorMap.onChange}
-              >
+              <FormField label="City" error={field.state.meta.errorMap.onChange}>
                 {(props) => (
                   <Input
                     {...props}
@@ -144,10 +125,7 @@ export function ClientForm({
 
           <form.Field name="postcode">
             {(field) => (
-              <FormField
-                label="Postcode"
-                error={field.state.meta.errorMap.onChange}
-              >
+              <FormField label="Postcode" error={field.state.meta.errorMap.onChange}>
                 {(props) => (
                   <Input
                     {...props}
@@ -163,10 +141,7 @@ export function ClientForm({
 
           <form.Field name="country">
             {(field) => (
-              <FormField
-                label="Country"
-                error={field.state.meta.errorMap.onChange}
-              >
+              <FormField label="Country" error={field.state.meta.errorMap.onChange}>
                 {(props) => (
                   <Input
                     {...props}
@@ -183,10 +158,7 @@ export function ClientForm({
 
         <form.Field name="phone">
           {(field) => (
-            <FormField
-              label="Phone"
-              error={field.state.meta.errorMap.onChange}
-            >
+            <FormField label="Phone" error={field.state.meta.errorMap.onChange}>
               {(props) => (
                 <Input
                   {...props}
@@ -203,10 +175,7 @@ export function ClientForm({
 
         <form.Field name="notes">
           {(field) => (
-            <FormField
-              label="Notes"
-              error={field.state.meta.errorMap.onChange}
-            >
+            <FormField label="Notes" error={field.state.meta.errorMap.onChange}>
               {(props) => (
                 <Textarea
                   {...props}
@@ -234,4 +203,3 @@ export function ClientForm({
     </form>
   )
 }
-

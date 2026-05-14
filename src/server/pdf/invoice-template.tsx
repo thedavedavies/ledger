@@ -1,20 +1,9 @@
-import {
-  Document,
-  Page,
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  Font,
-} from '@react-pdf/renderer'
+import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer'
 import { formatMoney } from '#/lib/money'
 
 Font.register({
   family: 'Helvetica',
-  fonts: [
-    { src: 'Helvetica' },
-    { src: 'Helvetica-Bold', fontWeight: 'bold' },
-  ],
+  fonts: [{ src: 'Helvetica' }, { src: 'Helvetica-Bold', fontWeight: 'bold' }],
 })
 
 const styles = StyleSheet.create({
@@ -239,12 +228,16 @@ function formatDate(date: string | Date): string {
 }
 
 function companyAddress(c: InvoiceTemplateProps['company']): string {
-  const parts = [c.address, [c.city, c.postcode].filter(Boolean).join(', '), c.country].filter(Boolean)
+  const parts = [c.address, [c.city, c.postcode].filter(Boolean).join(', '), c.country].filter(
+    Boolean,
+  )
   return parts.join('\n')
 }
 
 function clientAddress(c: NonNullable<InvoiceTemplateProps['client']>): string {
-  const parts = [c.address, [c.city, c.postcode].filter(Boolean).join(', '), c.country].filter(Boolean)
+  const parts = [c.address, [c.city, c.postcode].filter(Boolean).join(', '), c.country].filter(
+    Boolean,
+  )
   return parts.join('\n')
 }
 
@@ -264,24 +257,12 @@ export function InvoiceTemplate({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {logoSrc && (
-              <Image style={styles.logo} src={logoSrc} />
-            )}
+            {logoSrc && <Image style={styles.logo} src={logoSrc} />}
             <View>
-              <Text style={styles.companyName}>
-                {company.businessName || '—'}
-              </Text>
-              <Text style={styles.companyDetail}>
-                {companyAddress(company)}
-              </Text>
-              {company.email && (
-                <Text style={styles.companyDetail}>{company.email}</Text>
-              )}
-              {company.taxId && (
-                <Text style={styles.companyDetail}>
-                  Tax ID: {company.taxId}
-                </Text>
-              )}
+              <Text style={styles.companyName}>{company.businessName || '-'}</Text>
+              <Text style={styles.companyDetail}>{companyAddress(company)}</Text>
+              {company.email && <Text style={styles.companyDetail}>{company.email}</Text>}
+              {company.taxId && <Text style={styles.companyDetail}>Tax ID: {company.taxId}</Text>}
             </View>
           </View>
           <View>
@@ -297,22 +278,18 @@ export function InvoiceTemplate({
             {cl && (
               <>
                 <Text style={styles.clientName}>{cl.name}</Text>
-                <Text style={styles.companyDetail}>
-                  {clientAddress(cl)}
-                </Text>
-                {cl.email && (
-                  <Text style={styles.companyDetail}>{cl.email}</Text>
-                )}
+                <Text style={styles.companyDetail}>{clientAddress(cl)}</Text>
+                {cl.email && <Text style={styles.companyDetail}>{cl.email}</Text>}
               </>
             )}
           </View>
           <View>
             <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Issue date — </Text>
+              <Text style={styles.metaLabel}>Issue date: </Text>
               <Text style={styles.metaValue}>{formatDate(inv.issueDate)}</Text>
             </View>
             <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Due date — </Text>
+              <Text style={styles.metaLabel}>Due date: </Text>
               <Text style={styles.metaValue}>{formatDate(inv.dueDate)}</Text>
             </View>
           </View>
@@ -320,16 +297,10 @@ export function InvoiceTemplate({
 
         {/* Line items table header (fixed = repeats on every page) */}
         <View style={styles.tableHeader} fixed>
-          <Text style={[styles.tableHeaderText, styles.colDescription]}>
-            Description
-          </Text>
+          <Text style={[styles.tableHeaderText, styles.colDescription]}>Description</Text>
           <Text style={[styles.tableHeaderText, styles.colQty]}>Qty</Text>
-          <Text style={[styles.tableHeaderText, styles.colUnitPrice]}>
-            Unit price
-          </Text>
-          <Text style={[styles.tableHeaderText, styles.colAmount]}>
-            Amount
-          </Text>
+          <Text style={[styles.tableHeaderText, styles.colUnitPrice]}>Unit price</Text>
+          <Text style={[styles.tableHeaderText, styles.colAmount]}>Amount</Text>
         </View>
 
         {/* Line items (wrappable) */}
@@ -338,12 +309,8 @@ export function InvoiceTemplate({
             <View style={styles.tableRow} key={li.id} wrap={false}>
               <Text style={styles.colDescription}>{li.description}</Text>
               <Text style={styles.colQty}>{li.quantity}</Text>
-              <Text style={styles.colUnitPrice}>
-                {formatMoney(li.unitPriceCents, currency)}
-              </Text>
-              <Text style={styles.colAmount}>
-                {formatMoney(li.lineTotalCents, currency)}
-              </Text>
+              <Text style={styles.colUnitPrice}>{formatMoney(li.unitPriceCents, currency)}</Text>
+              <Text style={styles.colAmount}>{formatMoney(li.lineTotalCents, currency)}</Text>
             </View>
           ))}
         </View>
@@ -363,9 +330,7 @@ export function InvoiceTemplate({
             )}
             <View style={[styles.totalsRow, styles.totalsBorder]}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalAmount}>
-                {formatMoney(inv.totalCents, currency)}
-              </Text>
+              <Text style={styles.totalAmount}>{formatMoney(inv.totalCents, currency)}</Text>
             </View>
           </View>
         </View>
@@ -381,9 +346,7 @@ export function InvoiceTemplate({
         {/* Page footer with page numbers */}
         <Text
           style={styles.footer}
-          render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages}`
-          }
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
           fixed
         />
       </Page>

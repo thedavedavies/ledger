@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getTableColumns, getTableName } from 'drizzle-orm'
-import {
-  companyProfile,
-  client,
-  invoice,
-  invoiceLineItem,
-  numberSequence,
-} from '#/server/schema'
+import { companyProfile, client, invoice, invoiceLineItem, numberSequence } from '#/server/schema'
 
 describe('schema definitions', () => {
   it('companyProfile table has expected columns', () => {

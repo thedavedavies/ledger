@@ -2,10 +2,10 @@
    the full weight range, plus italic for the serif. Fontsource ships only the
    latin/latin-ext subsets we need on top, with unicode-range subsetting so
    browsers fetch only what's used. */
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/source-serif-4";
-@import "@fontsource-variable/source-serif-4/wght-italic.css";
-@import "tailwindcss";
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/source-serif-4';
+@import '@fontsource-variable/source-serif-4/wght-italic.css';
+@import 'tailwindcss';
 
 /* Plan says no dark mode in MVP. Tailwind v4 defaults to honouring the user's
    prefers-color-scheme media query for `dark:` variants, which makes shadcn
@@ -15,9 +15,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-serif: "Source Serif 4 Variable", "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font-sans:
+    'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-serif:
+    'Source Serif 4 Variable', 'Source Serif 4', 'Source Serif Pro', Georgia, 'Times New Roman',
+    serif;
 
   /* Cream palette taken directly from design.pen variables.
      bg-page sits behind everything; bg-document is the lifted document/card
@@ -105,7 +108,7 @@ body {
     font-weight: 400;
   }
   .status-pill::before {
-    content: "";
+    content: '';
     display: inline-block;
     width: 0.45rem;
     height: 0.45rem;
@@ -113,9 +116,19 @@ body {
     background-color: currentColor;
     flex-shrink: 0;
   }
-  .status-draft   { color: var(--color-status-draft); }
-  .status-sent    { color: var(--color-status-sent); }
-  .status-paid    { color: var(--color-status-paid); }
-  .status-overdue { color: var(--color-status-overdue); }
-  .status-void    { color: var(--color-status-void); }
+  .status-draft {
+    color: var(--color-status-draft);
+  }
+  .status-sent {
+    color: var(--color-status-sent);
+  }
+  .status-paid {
+    color: var(--color-status-paid);
+  }
+  .status-overdue {
+    color: var(--color-status-overdue);
+  }
+  .status-void {
+    color: var(--color-status-void);
+  }
 }

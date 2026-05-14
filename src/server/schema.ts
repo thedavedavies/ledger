@@ -34,7 +34,9 @@ export const companyProfile = pgTable(
 )
 
 export const client = pgTable('client', {
-  id: uuid().primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text().notNull(),
   companyName: text('company_name').notNull().default(''),
   email: text().notNull(),
@@ -53,7 +55,9 @@ export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void'
 export const invoice = pgTable(
   'invoice',
   {
-    id: uuid().primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid()
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     number: text().notNull(),
     clientId: uuid('client_id')
       .notNull()
@@ -62,9 +66,15 @@ export const invoice = pgTable(
     issueDate: timestamp('issue_date', { withTimezone: true }).notNull(),
     dueDate: timestamp('due_date', { withTimezone: true }).notNull(),
     taxRate: numeric('tax_rate', { precision: 5, scale: 2 }).notNull().default('0'),
-    subtotalCents: bigint('subtotal_cents', { mode: 'bigint' }).notNull().default(sql`0`),
-    taxCents: bigint('tax_cents', { mode: 'bigint' }).notNull().default(sql`0`),
-    totalCents: bigint('total_cents', { mode: 'bigint' }).notNull().default(sql`0`),
+    subtotalCents: bigint('subtotal_cents', { mode: 'bigint' })
+      .notNull()
+      .default(sql`0`),
+    taxCents: bigint('tax_cents', { mode: 'bigint' })
+      .notNull()
+      .default(sql`0`),
+    totalCents: bigint('total_cents', { mode: 'bigint' })
+      .notNull()
+      .default(sql`0`),
     notes: text().notNull().default(''),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -73,7 +83,9 @@ export const invoice = pgTable(
 )
 
 export const invoiceLineItem = pgTable('invoice_line_item', {
-  id: uuid().primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   invoiceId: uuid('invoice_id')
     .notNull()
     .references(() => invoice.id, { onDelete: 'cascade' }),
@@ -92,7 +104,9 @@ export const numberSequence = pgTable('number_sequence', {
 })
 
 export const payment = pgTable('payment', {
-  id: uuid().primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid()
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   invoiceId: uuid('invoice_id')
     .notNull()
     .references(() => invoice.id, { onDelete: 'cascade' }),

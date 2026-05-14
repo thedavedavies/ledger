@@ -15,9 +15,7 @@ export const Route = createRootRoute({
       },
       { title: 'Ledger.' },
     ],
-    links: [
-      { rel: 'stylesheet', href: appCss },
-    ],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
   component: RootComponent,
   notFoundComponent: NotFound,

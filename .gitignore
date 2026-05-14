@@ -30,6 +30,9 @@ coverage/
 .nyc_output
 .grunt
 lib-cov
+test-results/
+playwright-report/
+playwright/.cache/
 
 # Build output
 dist/
@@ -59,7 +62,11 @@ out/
 .env*.local
 
 # IDE and editor files
-.vscode/
+# .vscode is ignored except for two files we commit so every contributor
+# gets the same Prettier-on-save behaviour and extension recommendations.
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo

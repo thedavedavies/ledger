@@ -7,10 +7,7 @@ import { createInvoice } from '#/server/invoices.fn'
 
 export const Route = createFileRoute('/invoices/new')({
   loader: async () => {
-    const [clients, profile] = await Promise.all([
-      listClients(),
-      getCompanyProfile(),
-    ])
+    const [clients, profile] = await Promise.all([listClients(), getCompanyProfile()])
     return { clients, profile }
   },
   component: NewInvoicePage,
@@ -34,9 +31,7 @@ function NewInvoicePage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">New invoice</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Create a new invoice for a client.
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">Create a new invoice for a client.</p>
 
       <InvoiceForm
         defaultValues={{

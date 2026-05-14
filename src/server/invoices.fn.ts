@@ -7,26 +7,24 @@ import { allocateInvoiceNumber } from './numbering'
 import { db } from './db'
 import { client, companyProfile, invoice, invoiceLineItem } from './schema'
 
-export const listInvoices = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    const rows = await db
-      .select({
-        id: invoice.id,
-        number: invoice.number,
-        clientId: invoice.clientId,
-        clientName: client.name,
-        issueDate: invoice.issueDate,
-        dueDate: invoice.dueDate,
-        status: invoice.status,
-        totalCents: invoice.totalCents,
-      })
-      .from(invoice)
-      .innerJoin(client, eq(invoice.clientId, client.id))
-      .orderBy(desc(invoice.issueDate), desc(invoice.createdAt))
+export const listInvoices = createServerFn({ method: 'GET' }).handler(async () => {
+  const rows = await db
+    .select({
+      id: invoice.id,
+      number: invoice.number,
+      clientId: invoice.clientId,
+      clientName: client.name,
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      status: invoice.status,
+      totalCents: invoice.totalCents,
+    })
+    .from(invoice)
+    .innerJoin(client, eq(invoice.clientId, client.id))
+    .orderBy(desc(invoice.issueDate), desc(invoice.createdAt))
 
-    return rows
-  },
-)
+  return rows
+})
 
 export const getInvoice = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ id: z.string().uuid() }))
@@ -166,9 +164,7 @@ export const updateInvoice = createServerFn({ method: 'POST' })
 
       if (!inv) throw new Error('Invoice not found')
 
-      await tx
-        .delete(invoiceLineItem)
-        .where(eq(invoiceLineItem.invoiceId, id))
+      await tx.delete(invoiceLineItem).where(eq(invoiceLineItem.invoiceId, id))
 
       const lineValues = fields.lineItems.map((li, i) => ({
         invoiceId: id,
@@ -190,10 +186,7 @@ export const updateInvoice = createServerFn({ method: 'POST' })
 export const deleteInvoice = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    const [deleted] = await db
-      .delete(invoice)
-      .where(eq(invoice.id, data.id))
-      .returning()
+    const [deleted] = await db.delete(invoice).where(eq(invoice.id, data.id)).returning()
 
     if (!deleted) {
       throw new Error('Invoice not found')

@@ -1,7 +1,4 @@
-import {
-  createStartHandler,
-  defaultStreamHandler,
-} from '@tanstack/react-start/server'
+import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server'
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'DELETE', 'PATCH'])
 
@@ -18,7 +15,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 // 'self' covers same-origin server-fn POSTs.
 //
 // In dev, Vite/HMR uses inline modules, dynamic imports, eval, and a
-// websocket — we skip CSP entirely so the dev experience isn't crippled.
+// websocket, so we skip CSP entirely so the dev experience isn't crippled.
 // (X-Frame-Options, nosniff, Referrer-Policy still apply.)
 const CSP = [
   "default-src 'self'",

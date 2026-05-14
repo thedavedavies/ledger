@@ -32,10 +32,7 @@ function startOfDay(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }
 
-export function timeAgo(
-  input: Date | string | number,
-  now: Date = new Date(),
-): string {
+export function timeAgo(input: Date | string | number, now: Date = new Date()): string {
   const then = input instanceof Date ? input : new Date(input)
   if (Number.isNaN(then.getTime())) return ''
 
@@ -54,7 +51,7 @@ export function timeAgo(
 
   // Day-relative formatting based on calendar days, not 24h windows. This
   // means an event at 11pm yesterday reads "Yesterday" at 1am today, not
-  // "2 hours ago" — matching how people actually think about time.
+  // "2 hours ago", matching how people actually think about time.
   const dayDiff = Math.round((startOfDay(now) - startOfDay(then)) / 86_400_000)
 
   if (dayDiff === 0) return `${hours} hours ago`

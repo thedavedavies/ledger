@@ -1,11 +1,7 @@
 import { sql } from 'drizzle-orm'
 import type { db } from './db'
 
-export function formatInvoiceNumber(
-  prefix: string,
-  year: number,
-  sequence: number,
-): string {
+export function formatInvoiceNumber(prefix: string, year: number, sequence: number): string {
   return `${prefix}-${year}-${String(sequence).padStart(4, '0')}`
 }
 

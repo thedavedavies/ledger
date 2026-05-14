@@ -13,13 +13,7 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { invoiceInput, type InvoiceInput } from '#/lib/validators'
-import {
-  fromCents,
-  toCents,
-  computeInvoiceTotals,
-  formatMoney,
-  currencySymbol,
-} from '#/lib/money'
+import { fromCents, toCents, computeInvoiceTotals, formatMoney, currencySymbol } from '#/lib/money'
 
 interface Client {
   id: string
@@ -65,10 +59,7 @@ function computeLineTotal(quantity: string, unitPrice: string): string | null {
     const price = Number(effectivePrice)
     if (isNaN(qty) || isNaN(price) || qty <= 0 || price < 0) return null
     const cents = toCents(effectivePrice)
-    const { lineTotals } = computeInvoiceTotals(
-      [{ quantity, unitPriceCents: cents }],
-      0,
-    )
+    const { lineTotals } = computeInvoiceTotals([{ quantity, unitPriceCents: cents }], 0)
     return fromCents(lineTotals[0]!)
   } catch {
     return null
@@ -127,15 +118,9 @@ export function InvoiceForm({
           <div className="mt-4 grid gap-6">
             <form.Field name="clientId">
               {(field) => (
-                <FormField
-                  label="Client"
-                  error={field.state.meta.errorMap.onChange}
-                >
+                <FormField label="Client" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
-                    <Select
-                      value={field.state.value}
-                      onValueChange={(v) => field.handleChange(v)}
-                    >
+                    <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
                       <SelectTrigger {...props} className="w-full">
                         <SelectValue />
                       </SelectTrigger>
@@ -159,10 +144,7 @@ export function InvoiceForm({
           <div className="mt-4 grid grid-cols-2 gap-4">
             <form.Field name="issueDate">
               {(field) => (
-                <FormField
-                  label="Issue date"
-                  error={field.state.meta.errorMap.onChange}
-                >
+                <FormField label="Issue date" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
                     <Input
                       {...props}
@@ -178,10 +160,7 @@ export function InvoiceForm({
 
             <form.Field name="dueDate">
               {(field) => (
-                <FormField
-                  label="Due date"
-                  error={field.state.meta.errorMap.onChange}
-                >
+                <FormField label="Due date" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
                     <Input
                       {...props}
@@ -203,10 +182,7 @@ export function InvoiceForm({
             {(field) => (
               <div className="mt-4">
                 {field.state.meta.errorMap.onChange && (
-                  <p
-                    role="alert"
-                    className="mb-2 text-sm text-destructive"
-                  >
+                  <p role="alert" className="mb-2 text-sm text-destructive">
                     {field.state.meta.errorMap.onChange}
                   </p>
                 )}
@@ -226,10 +202,7 @@ export function InvoiceForm({
                     <form.Field key={i} name={`lineItems[${i}]`}>
                       {(lineField) => {
                         const line = lineField.state.value as InvoiceInput['lineItems'][number]
-                        const lineTotal = computeLineTotal(
-                          line.quantity,
-                          line.unitPrice,
-                        )
+                        const lineTotal = computeLineTotal(line.quantity, line.unitPrice)
                         const descId = `${lineIdBase}-${i}-description`
                         const qtyId = `${lineIdBase}-${i}-quantity`
                         const priceId = `${lineIdBase}-${i}-unit-price`
@@ -249,9 +222,7 @@ export function InvoiceForm({
                                     }}
                                     value={descField.state.value}
                                     onBlur={descField.handleBlur}
-                                    onChange={(e) =>
-                                      descField.handleChange(e.target.value)
-                                    }
+                                    onChange={(e) => descField.handleChange(e.target.value)}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') e.preventDefault()
                                     }}
@@ -270,9 +241,7 @@ export function InvoiceForm({
                                     id={qtyId}
                                     value={qtyField.state.value}
                                     onBlur={qtyField.handleBlur}
-                                    onChange={(e) =>
-                                      qtyField.handleChange(e.target.value)
-                                    }
+                                    onChange={(e) => qtyField.handleChange(e.target.value)}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') e.preventDefault()
                                     }}
@@ -299,9 +268,7 @@ export function InvoiceForm({
                                       id={priceId}
                                       value={priceField.state.value}
                                       onBlur={priceField.handleBlur}
-                                      onChange={(e) =>
-                                        priceField.handleChange(e.target.value)
-                                      }
+                                      onChange={(e) => priceField.handleChange(e.target.value)}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') e.preventDefault()
                                       }}
@@ -313,24 +280,21 @@ export function InvoiceForm({
                               )}
                             </form.Field>
                             <div className="text-right text-sm tabular-nums text-muted-foreground">
-                              {lineTotal !== null ? lineTotal : '—'}
+                              {lineTotal !== null ? lineTotal : '-'}
                             </div>
                             <IconButton
                               type="button"
                               variant="ghost"
                               size="sm"
                               label={`Remove line item ${i + 1}`}
-                              aria-disabled={
-                                field.state.value.length <= 1 || undefined
-                              }
+                              aria-disabled={field.state.value.length <= 1 || undefined}
                               className="h-8 w-8 cursor-pointer p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
                               onClick={() => {
                                 if (field.state.value.length <= 1) return
                                 field.removeValue(i)
                                 requestAnimationFrame(() => {
                                   const target = Math.max(0, i - 1)
-                                  const ref =
-                                    descriptionRefs.current.get(target)
+                                  const ref = descriptionRefs.current.get(target)
                                   ref?.focus()
                                 })
                               }}
@@ -381,9 +345,7 @@ export function InvoiceForm({
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Subtotal</span>
                       <span className="tabular-nums">
-                        {totals
-                          ? formatMoney(totals.subtotalCents, currency)
-                          : '—'}
+                        {totals ? formatMoney(totals.subtotalCents, currency) : '-'}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -391,17 +353,13 @@ export function InvoiceForm({
                         Tax{!isNaN(rate) && rate > 0 ? ` ${rate}%` : ''}
                       </span>
                       <span className="tabular-nums">
-                        {totals
-                          ? formatMoney(totals.taxCents, currency)
-                          : '—'}
+                        {totals ? formatMoney(totals.taxCents, currency) : '-'}
                       </span>
                     </div>
                     <div className="flex justify-between border-t pt-2 text-base font-semibold">
                       <span>Total</span>
                       <span className="tabular-nums">
-                        {totals
-                          ? formatMoney(totals.totalCents, currency)
-                          : '—'}
+                        {totals ? formatMoney(totals.totalCents, currency) : '-'}
                       </span>
                     </div>
                   </div>
@@ -415,10 +373,7 @@ export function InvoiceForm({
           <div className="grid gap-6">
             <form.Field name="taxRate">
               {(field) => (
-                <FormField
-                  label="Tax rate (%)"
-                  error={field.state.meta.errorMap.onChange}
-                >
+                <FormField label="Tax rate (%)" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
                     <Input
                       {...props}
@@ -436,10 +391,7 @@ export function InvoiceForm({
 
             <form.Field name="notes">
               {(field) => (
-                <FormField
-                  label="Notes"
-                  error={field.state.meta.errorMap.onChange}
-                >
+                <FormField label="Notes" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
                     <textarea
                       {...props}
@@ -470,4 +422,3 @@ export function InvoiceForm({
     </form>
   )
 }
-

@@ -97,9 +97,7 @@ describe('invoiceInput validator', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      const msg = result.error.issues.find((i) =>
-        i.path.some((p) => p === 'lineItems'),
-      )?.message
+      const msg = result.error.issues.find((i) => i.path.some((p) => p === 'lineItems'))?.message
       expect(msg).toBe('An invoice needs at least one line item')
     }
   })
@@ -116,9 +114,7 @@ describe('invoiceInput validator', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      const msg = result.error.issues.find((i) =>
-        i.path.some((p) => p === 'lineItems'),
-      )?.message
+      const msg = result.error.issues.find((i) => i.path.some((p) => p === 'lineItems'))?.message
       expect(msg).toBe('Maximum 100 line items per invoice')
     }
   })

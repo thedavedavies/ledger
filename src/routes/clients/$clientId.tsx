@@ -57,11 +57,7 @@ function EditClientPage() {
             Update details for {clientData.name}.
           </p>
         </div>
-        <Button
-          variant="destructiveOutline"
-          size="sm"
-          onClick={() => setShowDelete(true)}
-        >
+        <Button variant="destructiveOutline" size="sm" onClick={() => setShowDelete(true)}>
           Delete client
         </Button>
       </div>
@@ -90,34 +86,21 @@ function EditClientPage() {
         }}
       />
 
-      <Dialog
-        open={showDelete}
-        onOpenChange={(open) => !open && setShowDelete(false)}
-      >
+      <Dialog open={showDelete} onOpenChange={(open) => !open && setShowDelete(false)}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>Delete client</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete{' '}
-              <span className="font-medium text-foreground">
-                {clientData.name}
-              </span>
-              ? This action cannot be undone.
+              <span className="font-medium text-foreground">{clientData.name}</span>? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDelete(false)}
-              disabled={deleting}
-            >
+            <Button variant="outline" onClick={() => setShowDelete(false)} disabled={deleting}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>

@@ -227,17 +227,14 @@ function SettingsPage() {
               {(field) => (
                 <FormField label="Default currency" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
-                    <Select
-                      value={field.state.value}
-                      onValueChange={(v) => field.handleChange(v)}
-                    >
+                    <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
                       <SelectTrigger {...props} className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {CURRENCIES.map((c) => (
                           <SelectItem key={c.code} value={c.code}>
-                            {c.code} — {c.name}
+                            {c.code} · {c.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -297,4 +294,3 @@ function SettingsPage() {
     </div>
   )
 }
-

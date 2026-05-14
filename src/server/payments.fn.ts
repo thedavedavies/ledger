@@ -22,9 +22,7 @@ export const createPayment = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     // Convert decimal amount string (e.g. "3200.00") to integer cents using Decimal
     // for precision; matches the money math pattern used elsewhere.
-    const amountCents = BigInt(
-      new Decimal(data.amount).times(100).round().toFixed(0),
-    )
+    const amountCents = BigInt(new Decimal(data.amount).times(100).round().toFixed(0))
 
     const [created] = await db
       .insert(payment)
@@ -48,10 +46,7 @@ export const createPayment = createServerFn({ method: 'POST' })
 export const deletePayment = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    const [deleted] = await db
-      .delete(payment)
-      .where(eq(payment.id, data.id))
-      .returning()
+    const [deleted] = await db.delete(payment).where(eq(payment.id, data.id)).returning()
 
     if (!deleted) {
       throw new Error('Payment not found')

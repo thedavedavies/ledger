@@ -26,7 +26,10 @@ const TICK_COUNT = 4
 
 // Picks a "nice" axis maximum and evenly spaced tick values in cents. Step is
 // 1, 2, 2.5, 5 or 10 × 10^k so the y-axis reads as round numbers.
-function niceAxis(maxCents: bigint, tickCount: number): {
+function niceAxis(
+  maxCents: bigint,
+  tickCount: number,
+): {
   max: bigint
   ticks: bigint[]
 } {
@@ -39,8 +42,7 @@ function niceAxis(maxCents: bigint, tickCount: number): {
   const rawStep = Number(maxCents) / intervals
   const mag = Math.pow(10, Math.floor(Math.log10(rawStep)))
   const norm = rawStep / mag
-  const niceNorm =
-    norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10
+  const niceNorm = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10
   const step = niceNorm * mag
   const ticks: bigint[] = []
   for (let i = 0; i <= intervals; i++) {
@@ -49,12 +51,7 @@ function niceAxis(maxCents: bigint, tickCount: number): {
   return { max: ticks[ticks.length - 1]!, ticks }
 }
 
-export function MonthlyBarChart({
-  caption,
-  data,
-  formatAxis,
-  formatTooltip,
-}: Props) {
+export function MonthlyBarChart({ caption, data, formatAxis, formatTooltip }: Props) {
   const captionId = useId()
   const descId = useId()
 
@@ -88,10 +85,7 @@ export function MonthlyBarChart({
       aria-describedby={descId}
       className="space-y-3"
     >
-      <figcaption
-        id={captionId}
-        className="text-sm font-medium text-foreground"
-      >
+      <figcaption id={captionId} className="text-sm font-medium text-foreground">
         {caption}
       </figcaption>
       <p id={descId} className="sr-only">

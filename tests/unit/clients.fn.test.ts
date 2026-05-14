@@ -60,9 +60,7 @@ describe('clientInput validator', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(
-        'Name must be 200 characters or fewer',
-      )
+      expect(result.error.issues[0]?.message).toBe('Name must be 200 characters or fewer')
     }
   })
 
@@ -108,9 +106,7 @@ describe('clientInput validator', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(
-        'Address must be 500 characters or fewer',
-      )
+      expect(result.error.issues[0]?.message).toBe('Address must be 500 characters or fewer')
     }
   })
 
@@ -145,9 +141,7 @@ describe('clientInput validator', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(
-        'Phone must be 30 characters or fewer',
-      )
+      expect(result.error.issues[0]?.message).toBe('Phone must be 30 characters or fewer')
     }
   })
 

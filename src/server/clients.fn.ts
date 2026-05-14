@@ -5,26 +5,24 @@ import { clientInput } from '#/lib/validators'
 import { db } from './db'
 import { client, invoice } from './schema'
 
-export const listClients = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    const rows = await db
-      .select({
-        id: client.id,
-        name: client.name,
-        companyName: client.companyName,
-        email: client.email,
-        phone: client.phone,
-        invoiceCount: sql<number>`cast(count(${invoice.id}) as int)`,
-        updatedAt: client.updatedAt,
-      })
-      .from(client)
-      .leftJoin(invoice, eq(invoice.clientId, client.id))
-      .groupBy(client.id)
-      .orderBy(desc(client.updatedAt))
+export const listClients = createServerFn({ method: 'GET' }).handler(async () => {
+  const rows = await db
+    .select({
+      id: client.id,
+      name: client.name,
+      companyName: client.companyName,
+      email: client.email,
+      phone: client.phone,
+      invoiceCount: sql<number>`cast(count(${invoice.id}) as int)`,
+      updatedAt: client.updatedAt,
+    })
+    .from(client)
+    .leftJoin(invoice, eq(invoice.clientId, client.id))
+    .groupBy(client.id)
+    .orderBy(desc(client.updatedAt))
 
-    return rows
-  },
-)
+  return rows
+})
 
 export const getClient = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ id: z.string().uuid() }))
@@ -99,10 +97,7 @@ export const deleteClient = createServerFn({ method: 'POST' })
       }
     }
 
-    const [deleted] = await db
-      .delete(client)
-      .where(eq(client.id, data.id))
-      .returning()
+    const [deleted] = await db.delete(client).where(eq(client.id, data.id)).returning()
 
     if (!deleted) {
       throw new Error('Client not found')
