@@ -13,12 +13,12 @@ This file is the canonical guide for any AI agent (Claude Code, Cursor, Copilot,
 ## Stack
 
 - **TanStack Start v1** + **TanStack Router** + **Vite** + **TypeScript** (strict mode)
-- **Postgres 16** + **Drizzle ORM** (migrations in `drizzle/`, schema in `src/server/schema.ts`)
+- **Postgres 18** + **Drizzle ORM** (migrations in `drizzle/`, schema in `src/server/schema.ts`)
 - **@react-pdf/renderer** for invoice PDFs (no Chromium)
 - **Tailwind v4** + **Radix UI** (shadcn-style components copied into `src/components/ui/`)
 - **Zod** for validation; **Decimal.js** for quantity math
 - **Vitest** for unit + integration tests; **Playwright** for end-to-end
-- **ESLint 10** + **Prettier 3**; Node 22 (see `.nvmrc`)
+- **ESLint 10** + **Prettier 3**; Node 24 (see `.nvmrc`)
 
 ## Where code lives
 
