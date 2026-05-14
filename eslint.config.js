@@ -20,7 +20,12 @@ export default tseslint.config(
   {
     files: ['scripts/**/*.{js,mjs,cjs}'],
     languageOptions: {
-      globals: { process: 'readonly', console: 'readonly' },
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        Response: 'readonly',
+      },
     },
   },
   prettier,
