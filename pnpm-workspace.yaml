@@ -4,3 +4,10 @@
 allowBuilds:
   '@parcel/watcher': true # native file-watcher binding (Vite/TanStack)
   esbuild: true # downloads prebuilt esbuild binary
+
+# Transitive-dependency overrides. esbuild <0.25 has GHSA-67mh-4wv8-2f99
+# (dev server CORS bypass). drizzle-kit still pulls a deprecated
+# @esbuild-kit/* chain that pins esbuild@0.18.20; force it to a patched
+# version until drizzle-kit drops @esbuild-kit upstream.
+overrides:
+  esbuild: ^0.25.0
