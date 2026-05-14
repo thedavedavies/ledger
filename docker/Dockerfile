@@ -34,4 +34,4 @@ USER app
 EXPOSE 3000
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["node", "dist/server/server.js"]
+CMD ["node", "scripts/server.mjs"]
