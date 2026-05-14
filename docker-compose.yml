@@ -31,7 +31,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    command: node dist/server/server.js
+    command: node scripts/server.mjs
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/invoice
       PORT: "3000"
