@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
@@ -161,18 +161,32 @@ function InvoicesPage() {
   const filtersActive =
     search.trim() !== '' || statusFilter !== 'all' || clientFilter !== 'all' || dateFilter !== 'all'
 
+  // Filter changes reset to page 1 so the user is never stranded on an empty
+  // page after narrowing results.
+  function changeSearch(v: string) {
+    setSearch(v)
+    setPage(1)
+  }
+  function changeStatus(v: StatusFilter) {
+    setStatusFilter(v)
+    setPage(1)
+  }
+  function changeClient(v: string) {
+    setClientFilter(v)
+    setPage(1)
+  }
+  function changeDate(v: DatePreset) {
+    setDateFilter(v)
+    setPage(1)
+  }
+
   function clearFilters() {
     setSearch('')
     setStatusFilter('all')
     setClientFilter('all')
     setDateFilter('all')
-  }
-
-  // Reset to first page whenever the filtered set changes, so the user is
-  // never stranded on an empty page after narrowing results.
-  useEffect(() => {
     setPage(1)
-  }, [search, statusFilter, clientFilter, dateFilter])
+  }
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -224,13 +238,13 @@ function InvoicesPage() {
               <Input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => changeSearch(e.target.value)}
                 placeholder="Search by number or client"
                 aria-label="Search invoices"
                 className="pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+            <Select value={statusFilter} onValueChange={(v) => changeStatus(v as StatusFilter)}>
               <SelectTrigger aria-label="Filter by status" className="w-[160px]">
                 <SelectValue />
               </SelectTrigger>
@@ -245,7 +259,7 @@ function InvoicesPage() {
             </Select>
             <Select
               value={clientFilter}
-              onValueChange={setClientFilter}
+              onValueChange={changeClient}
               disabled={clientOptions.length === 0}
             >
               <SelectTrigger aria-label="Filter by client" className="w-[200px]">
@@ -260,7 +274,7 @@ function InvoicesPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DatePreset)}>
+            <Select value={dateFilter} onValueChange={(v) => changeDate(v as DatePreset)}>
               <SelectTrigger aria-label="Filter by date" className="w-[170px]">
                 <SelectValue />
               </SelectTrigger>
