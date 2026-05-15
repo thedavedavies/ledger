@@ -7,8 +7,26 @@ const NAV_ITEMS = [
   { to: '/settings', label: 'Settings', match: (p: string) => p.startsWith('/settings') },
 ] as const
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+type ProfileSummary = { businessName: string; email: string } | null
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
+}
+
+export function AppShell({
+  children,
+  profile,
+}: {
+  children: React.ReactNode
+  profile: ProfileSummary
+}) {
   const { pathname } = useLocation()
+  const businessName = profile?.businessName?.trim() || ''
+  const email = profile?.email?.trim() || ''
+  const showProfileBlock = Boolean(businessName || email)
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -40,18 +58,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
         </div>
-        <div className="flex items-center gap-2.5 border-t border-border pt-3.5 pb-0.5">
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tracking-wide text-white"
-            style={{ backgroundColor: 'var(--color-accent)' }}
+        {showProfileBlock && (
+          <Link
+            to="/settings"
+            className="flex items-center gap-2.5 border-t border-border pt-3.5 pb-0.5"
           >
-            EW
-          </div>
-          <div className="flex flex-col gap-0.5 leading-none">
-            <span className="text-[12px] font-medium text-foreground">Eleanor Whitmore</span>
-            <span className="text-[11px] text-muted-foreground">eleanor@whitmore.studio</span>
-          </div>
-        </div>
+            <div
+              aria-hidden
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tracking-wide text-white"
+              style={{ backgroundColor: 'var(--color-accent)' }}
+            >
+              {initialsFor(businessName || email)}
+            </div>
+            <div className="flex min-w-0 flex-col gap-0.5 leading-none">
+              {businessName && (
+                <span className="truncate text-[12px] font-medium text-foreground">
+                  {businessName}
+                </span>
+              )}
+              {email && (
+                <span className="truncate text-[11px] text-muted-foreground">{email}</span>
+              )}
+            </div>
+          </Link>
+        )}
       </div>
       <main className="flex-1 px-10 py-16">{children}</main>
     </div>

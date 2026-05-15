@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -23,6 +23,7 @@ export const Route = createFileRoute('/settings')({
 
 function SettingsPage() {
   const profile = Route.useLoaderData()
+  const router = useRouter()
 
   const form = useForm({
     defaultValues: {
@@ -52,6 +53,9 @@ function SettingsPage() {
       }
       try {
         await updateCompanyProfile({ data: result.data })
+        // Refresh the root loader so the sidebar picks up the new
+        // businessName/email immediately, plus this page's own loader.
+        await router.invalidate()
         toast.success('Saved')
       } catch {
         toast.error('Something went wrong. Please try again.')
