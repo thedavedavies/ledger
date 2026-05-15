@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
+  CompanyProfileMissingError,
   loadInvoiceData,
   renderInvoicePdf,
   PdfRenderTimeoutError,
@@ -12,7 +13,15 @@ export const Route = createFileRoute('/api/invoices/$invoiceId/pdf')({
       GET: async ({ params }) => {
         const invoiceId = params.invoiceId as string
 
-        const data = await loadInvoiceData(invoiceId)
+        let data: Awaited<ReturnType<typeof loadInvoiceData>>
+        try {
+          data = await loadInvoiceData(invoiceId)
+        } catch (err) {
+          if (err instanceof CompanyProfileMissingError) {
+            return new Response(err.message, { status: 409 })
+          }
+          throw err
+        }
         if (!data) {
           return new Response('Invoice not found', { status: 404 })
         }

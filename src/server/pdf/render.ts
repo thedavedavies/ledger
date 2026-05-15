@@ -46,6 +46,12 @@ export class TooManyRequestsError extends Error {
   }
 }
 
+export class CompanyProfileMissingError extends Error {
+  constructor() {
+    super('Company profile not configured. Visit Settings to set it up.')
+  }
+}
+
 const UPLOADS_DIR = path.resolve(process.env['UPLOADS_DIR'] || 'uploads')
 
 function resolveLogoPath(logoPath: string | null): string | null {
@@ -96,7 +102,7 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
   ])
 
   if (!profile) {
-    throw new Error('Company profile not configured. Visit Settings to set it up.')
+    throw new CompanyProfileMissingError()
   }
 
   const logoSrc = resolveLogoPath(profile.logoPath)
@@ -155,18 +161,31 @@ export class PdfRenderTimeoutError extends Error {
 
 export async function renderInvoicePdf(props: InvoiceTemplateProps): Promise<Buffer> {
   await acquireSemaphore()
+
+  const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
+  // Hold the semaphore until the underlying render actually settles. If the
+  // timeout below wins the race, `renderToBuffer` can't be cancelled, so the
+  // work keeps running. Releasing the slot eagerly would let new renders
+  // start alongside the hung one, breaking PDF_RENDER_CONCURRENCY and risking
+  // CPU/memory exhaustion. Killable workers (worker_threads or a subprocess
+  // pool) would let us actually cancel, but that's a larger refactor.
+  const render = renderToBuffer(element).finally(() => releaseSemaphore())
+  // Defensive: attach a rejection handler so a render that rejects after the
+  // timeout has already won the race doesn't surface as an unhandled rejection.
+  // The route still sees the timeout error via the race below.
+  render.catch(() => {})
+
   let timer: NodeJS.Timeout | undefined
   try {
-    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
-    const buffer = await Promise.race([
-      renderToBuffer(element),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new PdfRenderTimeoutError()), RENDER_TIMEOUT_MS)
-      }),
-    ])
-    return Buffer.from(buffer)
+    return Buffer.from(
+      await Promise.race([
+        render,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new PdfRenderTimeoutError()), RENDER_TIMEOUT_MS)
+        }),
+      ]),
+    )
   } finally {
     if (timer) clearTimeout(timer)
-    releaseSemaphore()
   }
 }
