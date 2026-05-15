@@ -1,5 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { loadInvoiceData, renderInvoicePdf, TooManyRequestsError } from '#/server/pdf/render'
+import {
+  loadInvoiceData,
+  renderInvoicePdf,
+  PdfRenderTimeoutError,
+  TooManyRequestsError,
+} from '#/server/pdf/render'
 
 export const Route = createFileRoute('/api/invoices/$invoiceId/pdf')({
   server: {
@@ -18,6 +23,9 @@ export const Route = createFileRoute('/api/invoices/$invoiceId/pdf')({
         } catch (err) {
           if (err instanceof TooManyRequestsError) {
             return new Response('Too many requests', { status: 429 })
+          }
+          if (err instanceof PdfRenderTimeoutError) {
+            return new Response('PDF render timed out', { status: 504 })
           }
           throw err
         }

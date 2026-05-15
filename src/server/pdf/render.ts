@@ -10,6 +10,7 @@ import type { InvoiceTemplateProps } from './invoice-template'
 
 const PDF_RENDER_CONCURRENCY = Math.max(1, Number(process.env['PDF_RENDER_CONCURRENCY']) || 4)
 const MAX_QUEUE = 16
+const RENDER_TIMEOUT_MS = 30_000
 
 let active = 0
 const waiting: Array<{
@@ -91,8 +92,12 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
       .select()
       .from(companyProfile)
       .where(eq(companyProfile.id, 1))
-      .then((rows) => rows[0]!),
+      .then((rows) => rows[0]),
   ])
+
+  if (!profile) {
+    throw new Error('Company profile not configured. Visit Settings to set it up.')
+  }
 
   const logoSrc = resolveLogoPath(profile.logoPath)
 
@@ -142,13 +147,26 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
   return { props, invoiceNumber: inv.number }
 }
 
+export class PdfRenderTimeoutError extends Error {
+  constructor() {
+    super(`PDF render exceeded ${RENDER_TIMEOUT_MS}ms`)
+  }
+}
+
 export async function renderInvoicePdf(props: InvoiceTemplateProps): Promise<Buffer> {
   await acquireSemaphore()
+  let timer: NodeJS.Timeout | undefined
   try {
     const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
-    const buffer = await renderToBuffer(element)
+    const buffer = await Promise.race([
+      renderToBuffer(element),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new PdfRenderTimeoutError()), RENDER_TIMEOUT_MS)
+      }),
+    ])
     return Buffer.from(buffer)
   } finally {
+    if (timer) clearTimeout(timer)
     releaseSemaphore()
   }
 }
