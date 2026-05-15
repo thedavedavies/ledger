@@ -82,7 +82,9 @@ export const createInvoice = createServerFn({ method: 'POST' })
     }))
 
     const totals = computeInvoiceTotals(lines, taxRate)
-    const issueYear = new Date(data.issueDate).getFullYear()
+    // Use UTC so a `YYYY-MM-DD` issueDate doesn't shift into the previous
+    // calendar year on negative-offset servers (e.g. 2026-01-01 in UTC-5).
+    const issueYear = new Date(data.issueDate).getUTCFullYear()
 
     const created = await db.transaction(async (tx) => {
       const invoiceNumber = await allocateInvoiceNumber(tx, issueYear, prefix)
