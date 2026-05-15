@@ -75,6 +75,25 @@ describe('buildInvoiceActivity', () => {
     expect(events.some((e) => e.label === 'Voided')).toBe(true)
   })
 
+  it('timestamps status-change events from updatedAt, not render time', () => {
+    // Regression: previously emitted `new Date()` so an invoice viewed weeks
+    // after being paid kept reading "just now".
+    const updatedAt = new Date('2026-05-09T10:30:00Z')
+    const events = buildInvoiceActivity(
+      { ...baseInvoice, status: 'paid', updatedAt },
+      [],
+      fmt,
+    )
+    const paidEvent = events.find((e) => e.label === 'Marked as paid')
+    expect(paidEvent?.at).toEqual(updatedAt)
+  })
+
+  it('falls back to createdAt when updatedAt is missing', () => {
+    const events = buildInvoiceActivity({ ...baseInvoice, status: 'void' }, [], fmt)
+    const voidEvent = events.find((e) => e.label === 'Voided')
+    expect(voidEvent?.at).toEqual(new Date(baseInvoice.createdAt))
+  })
+
   it('does not append a status event for draft or sent', () => {
     const draft = buildInvoiceActivity({ ...baseInvoice, status: 'draft' }, [], fmt)
     const sent = buildInvoiceActivity({ ...baseInvoice, status: 'sent' }, [], fmt)

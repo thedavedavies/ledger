@@ -4,6 +4,10 @@ export type InvoiceActivityEvent = { at: Date; label: string }
 
 type InvoiceLike = {
   createdAt: Date | string
+  // Used as the timestamp for "Marked as paid" / "Voided" events.  The invoice
+  // row's updatedAt advances every time status changes; we don't yet have a
+  // dedicated status_changed_at column.  Falls back to createdAt if missing.
+  updatedAt?: Date | string
   status: InvoiceStatus
 }
 
@@ -38,10 +42,11 @@ export function buildInvoiceActivity(
     })
   }
 
+  const statusChangedAt = new Date(invoice.updatedAt ?? invoice.createdAt)
   if (invoice.status === 'paid') {
-    events.push({ at: new Date(), label: 'Marked as paid' })
+    events.push({ at: statusChangedAt, label: 'Marked as paid' })
   } else if (invoice.status === 'void') {
-    events.push({ at: new Date(), label: 'Voided' })
+    events.push({ at: statusChangedAt, label: 'Voided' })
   }
 
   return events.sort((a, b) => b.at.getTime() - a.at.getTime())
