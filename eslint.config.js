@@ -33,6 +33,8 @@ export default tseslint.config(
         console: 'readonly',
         URL: 'readonly',
         Response: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
       },
     },
   },

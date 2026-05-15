@@ -40,7 +40,7 @@ async function tryServeStatic(pathname) {
 const port = Number(process.env.PORT) || 3000
 const hostname = process.env.BIND_HOST || '127.0.0.1'
 
-serve(
+const server = serve(
   {
     fetch: async (request) => {
       const { pathname } = new URL(request.url)
@@ -57,3 +57,27 @@ serve(
     console.log(`ledger listening on http://${address}:${port}`)
   },
 )
+
+// Drain in-flight requests on `docker compose stop` (SIGTERM) and Ctrl-C
+// (SIGINT) instead of dropping them mid-transaction. After 10s force-exit
+// so a stuck connection doesn't keep the container alive forever.
+let shuttingDown = false
+function shutdown(signal) {
+  if (shuttingDown) return
+  shuttingDown = true
+  console.log(`received ${signal}, draining...`)
+  const forceExit = setTimeout(() => {
+    console.error('shutdown timed out, exiting')
+    process.exit(1)
+  }, 10_000)
+  forceExit.unref()
+  server.close((err) => {
+    if (err) {
+      console.error('shutdown error', err)
+      process.exit(1)
+    }
+    process.exit(0)
+  })
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))
