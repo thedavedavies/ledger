@@ -72,8 +72,8 @@ CI runs all of these on every push and PR, plus a `docker build` smoke test.
 
 ## Commits and PRs
 
-- **DCO sign-off is required on every commit.** Use `git commit -s`. The `dco` GitHub Action blocks unsigned commits at the PR boundary.
 - Do **not** add `Co-Authored-By: Claude` or any AI co-author trailer.
+- Do **not** add a `Signed-off-by:` trailer. The project does not use DCO. `git commit` (no `-s`) is the default.
 - Do **not** add a "Generated with Claude Code" footer to commit messages or PR descriptions.
 - Match the existing commit style: lowercase, scoped where useful, e.g. `feat(invoices): ...`, `fix(invoice-detail): ...`, `chore: ...`.
 - Don't run `git commit` (or history-rewriting operations like `git filter-repo` / `git rebase`) without explicit user approval. Stage the change, show the diff, and ask.

@@ -4,6 +4,8 @@ A self-hostable invoicing app. Create clients, generate invoices, download PDFs.
 
 Single-tenant, AGPL-licensed, written for people who want to send invoices from their own server without renting a SaaS to do it.
 
+![Ledger dashboard](docs/dashboard.png)
+
 ## Heads-up: there's no authentication yet
 
 This MVP ships without auth. The default Docker Compose binds the app to `127.0.0.1` so only your own machine can reach it. **Do not** put a public address in front of it without a reverse proxy with access control. Anyone who can hit the bound port can read and write every invoice and client.
@@ -94,7 +96,7 @@ If you've found a vulnerability, please don't open a public issue. See [SECURITY
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). All commits must include a `Signed-off-by` trailer (DCO). No CLA.
+See [CONTRIBUTING.md](CONTRIBUTING.md). No CLA, no DCO.
 
 ## License
 

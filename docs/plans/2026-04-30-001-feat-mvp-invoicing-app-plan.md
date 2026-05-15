@@ -13,7 +13,7 @@ This plan stands up the **Community Edition** of an open-source invoicing app �
 
 A hosted SaaS counterpart is **explicitly out of scope** for this plan and for this repo. When (if) it is built, it will live in a **separate private overlay repo** that consumes this one as a dependency (git submodule or npm dependency), not as a fork. Sync direction is one-way OSS → SaaS via dependency bumps. This avoids the divergence cost of bidirectional sync, which is a real problem the day you have two repos and not before. Treat every feature in this repo as Community Edition first; never embed hosted-only concerns (billing UI, multi-tenancy scaffolding) in core.
 
-The stack is **TanStack Start v1 + Vite + TypeScript + PostgreSQL + Drizzle ORM + @react-pdf/renderer**, with Tailwind + shadcn/ui for the interface. License is **AGPL-3.0** with a **DCO sign-off** policy on contributions (no CLA). Self-hosters (and the maintainer locally) install via a single `docker compose up`.
+The stack is **TanStack Start v1 + Vite + TypeScript + PostgreSQL + Drizzle ORM + @react-pdf/renderer**, with Tailwind + shadcn/ui for the interface. License is **AGPL-3.0** with no CLA and no DCO requirement on contributions. Self-hosters (and the maintainer locally) install via a single `docker compose up`.
 
 ## Problem Frame
 
@@ -32,7 +32,7 @@ Locking the right things at MVP — license, distribution shape, data model, PDF
 - **R3.** Invoices have at least one line item with description, quantity, and unit price; subtotal and total are computed automatically.
 - **R4.** A user can download any invoice as a PDF.
 - **R5.** A user can edit a singleton "company profile" used to brand outgoing invoices (their own business name, address, optional logo).
-- **R6.** The app is licensed AGPL-3.0 and ships with a DCO contributor policy.
+- **R6.** The app is licensed AGPL-3.0 with no CLA or DCO requirement on contributions.
 - **R7.** A self-hoster can `git clone`, copy `.env.example` to `.env`, and run `docker compose up` to get a working installation backed by Postgres.
 - **R8.** All money math is precise — no floating-point drift in totals.
 
@@ -83,7 +83,7 @@ Key research findings from the Phase 1 research pass (April 2026):
 - **TanStack Start v1.0** released March 2026, ~6M weekly npm installs. `createServerFn` is the supported, stable server-function pattern. Pin to a specific 1.x and commit `package-lock.json`. ([release announcement](https://tanstack.com/blog/announcing-tanstack-start-v1), [hosting docs](https://tanstack.com/start/v0/docs/framework/react/guide/hosting))
 - **`@react-pdf/renderer`** is the right PDF choice for an OSS app that prioritises easy self-hosting: pure JS, no Chromium, layout in JSX, fits invoice tables/headers/footers naturally. Headless Chromium adds 250–400 MB to the Docker image and brings sandboxing pain. ([react-pdf.org](https://react-pdf.org/))
 - **Drizzle over Prisma**: ~7 KB gzipped vs Prisma's still-bulky generated client even after Prisma 7. Schema in one TS file lowers contributor friction. Raw SQL escape hatch (`sql\`...\``) handles invoice numbering with row locks cleanly. ([Drizzle vs Prisma](https://encore.dev/articles/drizzle-vs-prisma), [Drizzle migrations](https://orm.drizzle.team/docs/migrations))
-- **License pattern**: AGPL-3.0 + **DCO sign-off** (not a CLA) keeps contributor friction low. Cal.com, Documenso, and Plausible all run AGPL-3.0 SaaS models. Important caveat: DCO certifies provenance, it does **not** transfer copyright. Once the project accepts non-trivial external contributions, a future relicense (e.g. to dual-license or to add a closed Enterprise Edition) requires permission from every copyright holder, or rewriting their contributions. Plausible's later switch to a CLA was driven by exactly this constraint, and is the cautionary tale on adding contributor agreements after the fact. The plan accepts this: AGPL is treated as the long-term license, not a placeholder. ([Cal.com AGPL switch](https://cal.com/blog/changing-to-agplv3-and-introducing-enterprise-edition), [Documenso licenses](https://docs.documenso.com/users/licenses/community-edition))
+- **License pattern**: AGPL-3.0 with no CLA and no DCO requirement, prioritising contributor friction over relicensing optionality. Cal.com, Documenso, and Plausible all run AGPL-3.0 SaaS models (some with DCO, this project opts out). Important caveat: with no provenance trail and no CLA, a future relicense (e.g. to dual-license or to add a closed Enterprise Edition) requires permission from every copyright holder, or rewriting their contributions. Plausible's later switch to a CLA is the cautionary tale on adding contributor agreements after the fact. The plan accepts this: AGPL is treated as the long-term license, not a placeholder. ([Cal.com AGPL switch](https://cal.com/blog/changing-to-agplv3-and-introducing-enterprise-edition), [Documenso licenses](https://docs.documenso.com/users/licenses/community-edition))
 - **Docker Compose sharp edges**: run migrations as a separate one-shot service with `service_completed_successfully`; Postgres healthcheck must use `pg_isready` with a `start_period`; Vite inlines `VITE_*` at build time (server config must be runtime-only); HMR doesn't work in Docker dev — develop on host, containerise for prod. ([Docker depends_on healthchecks](https://oneuptime.com/blog/post/2026-01-16-docker-compose-depends-on-healthcheck/view))
 
 ## Key Technical Decisions
@@ -93,7 +93,7 @@ Key research findings from the Phase 1 research pass (April 2026):
 - **PostgreSQL 16.** Standard, well-understood, supported by every hosting platform self-hosters use.
 - **`@react-pdf/renderer` for invoice PDFs.** Pure JS, no native deps, JSX-based layout. Avoids shipping Chromium in self-host images.
 - **Tailwind CSS + shadcn/ui.** De-facto React component story in 2026; copy-in components stay in the repo and remain modifiable, no runtime CSS-in-JS.
-- **AGPL-3.0 + DCO sign-off.** Single license, no CLA at MVP. README's License section makes the SaaS-vs-self-host model explicit. DCO keeps contributor friction low but **does not preserve relicensing rights** — once the project accepts external contributions, AGPL is effectively permanent without permission from every contributor. The decision is to treat AGPL as the long-term license. A CLA may be adopted later only if the project never accepts external contributions in the meantime; otherwise relicensing is off the table.
+- **AGPL-3.0, no CLA, no DCO.** Single license, no contributor agreements. README's License section makes the SaaS-vs-self-host model explicit. **Does not preserve relicensing rights** — once the project accepts external contributions, AGPL is effectively permanent without permission from every contributor. The decision is to treat AGPL as the long-term license. A CLA may be adopted later only if the project never accepts external contributions in the meantime; otherwise relicensing is off the table.
 - **Money as integer minor units; quantity as `numeric(10,2)`.** All amount columns (`unit_price_cents`, `subtotal_cents`, `tax_cents`, `total_cents`, line `line_total_cents`) are Postgres `BIGINT`. Drizzle column mode is **`bigint`** (returns native `BigInt`), not `mode: 'number'` — `mode: 'number'` silently truncates above 2^53 and breaks `SUM()` aggregations once reporting features arrive. Quantity is `numeric(10,2)` and is parsed via `Decimal.js` (or equivalent) on the JS side; `node-postgres` returns `numeric` as a string by default, which **must not** be passed to `*` directly. Line totals are computed in cents at write time and stored — `line_total_cents = round(quantity_decimal × unit_price_cents)` — so list views never re-derive. The chosen rounding rule is **half-away-from-zero** (`Math.round` semantics), documented in `src/lib/money.ts`.
 - **One currency per invoice, no FX.** Each invoice stores an ISO 4217 currency code; the company profile holds the default. No conversion logic in MVP.
 - **Tax handled as a single optional flat percentage at invoice level** (not per line item). Stored as `tax_rate_basis_points` (integer, 100 = 1%) for precision; tax amount and total are computed and stored at write time. Per-line-item tax is a follow-up.
@@ -108,7 +108,7 @@ Key research findings from the Phase 1 research pass (April 2026):
 
 - **PDF library**: `@react-pdf/renderer` with `renderToBuffer(<Doc />)` Node helper. Multi-page supported from day 1 via `<View wrap>` body and `<View fixed>` repeating header. PDF route lives at `src/routes/api/invoices/$invoiceId/pdf.ts` (TanStack Start API file route).
 - **ORM**: Drizzle (Prisma rejected on Docker image and codegen friction).
-- **License + contributor model**: AGPL-3.0 + DCO via the `dco-check` GitHub Action. **DCO does not preserve relicensing rights** — once external contributions land, AGPL is effectively permanent. Decision: treat AGPL as the long-term license.
+- **License + contributor model**: AGPL-3.0, no CLA, no DCO check. Contributor friction prioritised over relicensing optionality; **without a CLA, AGPL is effectively permanent once external contributions land**. Decision: treat AGPL as the long-term license.
 - **Money representation**: integer minor units, BIGINT in schema, Drizzle `mode: 'bigint'` (native `BigInt`). Quantity is `numeric(10,2)` parsed via `Decimal.js`. Half-away-from-zero rounding rule, tested at boundaries.
 - **Tax model**: single flat invoice-level rate stored in basis points; per-line-item tax deferred. **Known limitation**: insufficient for jurisdictions requiring per-line VAT/GST (most of EU/UK/CA/AU). Flagged in README so non-US users aren't surprised.
 - **Currency model**: one ISO 4217 code per invoice, default from company profile, no FX in MVP.
@@ -125,7 +125,7 @@ Key research findings from the Phase 1 research pass (April 2026):
 - **UI scope**: desktop-first, min viewport 1024×768. No mobile, no dark mode, no theming in MVP.
 - **Validation/loading/toast pattern**: defined once in Unit 3, reused by Units 4 and 5. Field-level inline errors, disabled-with-spinner submit, success toast on save.
 - **Logging in MVP**: plain `console.log`/`console.error`. Structured logger lands when there's a real consumer.
-- **CI surface**: lint + typecheck + unit (Unit 1), Playwright e2e (Unit 6), `docker build` smoke + DCO action (Unit 8). No structured-logging tests.
+- **CI surface**: lint + typecheck + unit (Unit 1), Playwright e2e (Unit 6), `docker build` smoke (Unit 8). No structured-logging tests, no DCO check.
 
 ### Deferred to Implementation
 
@@ -195,7 +195,7 @@ ledger/
 ├── package-lock.json
 ├── README.md                             # includes License section explaining AGPL + SaaS model
 ├── LICENSE                               # AGPL-3.0 full text
-├── CONTRIBUTING.md                       # DCO, code conventions
+├── CONTRIBUTING.md                       # contributor guide, code conventions
 ├── CODE_OF_CONDUCT.md
 └── docs/
     └── plans/
@@ -646,7 +646,7 @@ sequenceDiagram
 
 - [x] **Unit 8: Repo essentials — license, README, contributing, basic CI polish**
 
-**Goal:** Make the repo legitimately open-source: AGPL license file, README that explains the project and how to self-host, CONTRIBUTING with DCO, code of conduct, and CI workflow polish.
+**Goal:** Make the repo legitimately open-source: AGPL license file, README that explains the project and how to self-host, CONTRIBUTING, code of conduct, and CI workflow polish.
 
 **Requirements:** R6, R7 (docs side).
 
@@ -658,30 +658,26 @@ sequenceDiagram
 - Create: `CONTRIBUTING.md`
 - Create: `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1)
 - Modify: `.github/workflows/ci.yml` (add `docker build` smoke step — Playwright is wired by Unit 6, this unit only adds the image-build job)
-- Create: `.github/PULL_REQUEST_TEMPLATE.md` (DCO reminder)
-- Create: `.github/workflows/dco.yml` (DCO sign-off check via the `dco-check` GitHub Action; the legacy Probot DCO app was deprecated in 2024)
+- Create: `.github/PULL_REQUEST_TEMPLATE.md`
 
 **Approach:**
 - README structure: one-line pitch → screenshot/animated GIF placeholder → "Self-host in 60s" Compose block (with a prominent **WARNING** above it: "This MVP has no authentication. Default Compose binds to 127.0.0.1; do not expose to a public network without a reverse proxy enforcing access control") → "Hosted SaaS" link placeholder → feature checklist (✅ MVP / ⏳ planned) → **License** section (two paragraphs: (1) AGPL-3.0 — self-host or modify freely, but offering it as a network service requires publishing your changes; (2) we run a hosted SaaS for those who don't want to self-host) → contributing link.
-- CONTRIBUTING.md: required `Signed-off-by:` (DCO) on every commit, instructions to use `git commit -s`, a one-line dev setup, and the rule that all PRs must include tests. The plan uses the **`dco-check` GitHub Action** in `.github/workflows/dco.yml` to gate merges; the legacy Probot "DCO" app is deprecated and is not used. Branch protection blocks merges when the DCO check fails. CONTRIBUTING explicitly states that contributions retain copyright with the contributor and the project will not seek a CLA in MVP.
-- CI workflow polish in this unit is limited to the `docker build` smoke job and the DCO workflow file. The Playwright e2e job is owned by Unit 6 (where the test is authored) — Unit 8 does not modify Playwright config.
+- CONTRIBUTING.md: a one-line dev setup and the rule that all PRs must include tests. CONTRIBUTING explicitly states that contributions retain copyright with the contributor and the project will not seek a CLA in MVP. No DCO sign-off requirement.
+- CI workflow polish in this unit is limited to the `docker build` smoke job. The Playwright e2e job is owned by Unit 6 (where the test is authored) — Unit 8 does not modify Playwright config.
 - All package metadata sets `license: "AGPL-3.0-or-later"`.
 
 **Patterns to follow:**
 - README and LICENSING phrasing close to Documenso / Cal.com.
-- DCO app + Signed-off-by reminder, like Linux/Chromium/Documenso.
 
 **Test scenarios:**
 - *Happy path:* `LICENSE` matches the canonical AGPL-3.0 text byte-for-byte.
 - *Happy path:* GitHub renders the README correctly and detects the license as AGPL-3.0.
 - *Happy path:* CI pipeline on a fresh PR runs lint + typecheck + unit tests + Playwright + Docker build; all green on a passing change.
-- *Edge case:* A commit without `Signed-off-by` is blocked from merging by the DCO check.
 - Test expectation: none for `CODE_OF_CONDUCT.md` and `LICENSING.md` — pure documentation, not behavioural.
 
 **Verification:**
 - A first-time visitor can read the README and either (a) self-host within 60 seconds or (b) understand exactly what's on the roadmap.
 - The repo's "About" sidebar on GitHub shows AGPL-3.0 detected.
-- DCO bot blocks unsigned commits.
 
 ---
 
@@ -825,7 +821,7 @@ sequenceDiagram
 | Single-tenant schema retrofit cost when v2 multi-tenancy lands | Unit 2 design uses UUID PKs, planned `account_id NOT NULL` migration with `DEFAULT NULL` backfill, planned reshape of `invoice.number` unique constraint to `(account_id, number)`. The v2 plan is expected to add RLS policies. Cost is real but bounded by the explicit forward-compat checklist. |
 | Tax model insufficient for VAT/GST jurisdictions | Documented as a known limitation in README. Per-line-item tax + tax codes is the next major scope item after auth/email/payments. |
 | HMR / dev experience inside Docker | Develop on host with `docker compose -f docker/postgres-dev.yml up -d` (Postgres only); `docker compose up` is for prod-shape testing. |
-| First contributors land non-DCO commits | `dco-check` GitHub Action gates merges; PR template reminds; CONTRIBUTING.md explains. |
+| First contributors aren't sure what's expected | CONTRIBUTING.md explains the no-CLA / no-DCO model and the quality gates required before opening a PR. |
 
 ## Documentation / Operational Notes
 
