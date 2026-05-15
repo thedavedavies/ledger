@@ -1,17 +1,24 @@
 import { z } from 'zod'
 import { CURRENCY_CODES } from './currency'
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 
-// `<input type="date">` returns `YYYY-MM-DD` strings.  Reject anything else
-// (including '2024-13-01' which `new Date` would silently parse to NaN and
-// crash the invoice-numbering upsert downstream).
+// `<input type="date">` returns `YYYY-MM-DD` strings.  Reject anything that
+// isn't a real calendar date.  `new Date('2026-02-31')` rolls over to March 3
+// and would otherwise pass a naive isFinite check, so verify the parsed
+// components round-trip back to the same numbers we read out of the string.
 const dateString = (label: string) =>
   z.string().refine(
     (v) => {
-      if (!ISO_DATE.test(v)) return false
-      const t = new Date(v + 'T00:00:00Z').getTime()
-      return Number.isFinite(t)
+      const match = ISO_DATE.exec(v)
+      if (!match) return false
+      const year = Number(match[1])
+      const month = Number(match[2])
+      const day = Number(match[3])
+      const dt = new Date(Date.UTC(year, month - 1, day))
+      return (
+        dt.getUTCFullYear() === year && dt.getUTCMonth() === month - 1 && dt.getUTCDate() === day
+      )
     },
     { message: `${label} must be a valid date (YYYY-MM-DD)` },
   )

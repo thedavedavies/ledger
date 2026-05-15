@@ -181,6 +181,15 @@ describe('invoiceInput', () => {
     expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026/05/09' }).success).toBe(false)
     expect(invoiceInput.safeParse({ ...validInvoice, dueDate: '' }).success).toBe(false)
   })
+
+  it('rejects calendar-invalid dates that would silently roll over', () => {
+    // new Date('2026-02-31') yields March 3; the refinement must catch this.
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026-02-31' }).success).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026-04-31' }).success).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2025-02-29' }).success).toBe(false)
+    // Leap day in an actual leap year should still pass.
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2024-02-29' }).success).toBe(true)
+  })
 })
 
 describe('invoiceStatusInput', () => {
