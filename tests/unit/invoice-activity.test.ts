@@ -79,11 +79,7 @@ describe('buildInvoiceActivity', () => {
     // Regression: previously emitted `new Date()` so an invoice viewed weeks
     // after being paid kept reading "just now".
     const updatedAt = new Date('2026-05-09T10:30:00Z')
-    const events = buildInvoiceActivity(
-      { ...baseInvoice, status: 'paid', updatedAt },
-      [],
-      fmt,
-    )
+    const events = buildInvoiceActivity({ ...baseInvoice, status: 'paid', updatedAt }, [], fmt)
     const paidEvent = events.find((e) => e.label === 'Marked as paid')
     expect(paidEvent?.at).toEqual(updatedAt)
   })

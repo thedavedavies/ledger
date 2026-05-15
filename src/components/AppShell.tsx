@@ -76,9 +76,7 @@ export function AppShell({
                   {businessName}
                 </span>
               )}
-              {email && (
-                <span className="truncate text-[11px] text-muted-foreground">{email}</span>
-              )}
+              {email && <span className="truncate text-[11px] text-muted-foreground">{email}</span>}
             </div>
           </Link>
         )}
