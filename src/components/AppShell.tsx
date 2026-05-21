@@ -30,11 +30,14 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen bg-background">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <div className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col justify-between border-r border-border bg-sidebar pt-7 pr-6 pb-6 pl-6">
         <div className="flex flex-col gap-9">
           <Link
             to="/"
-            className="font-serif text-[24px] font-medium leading-none tracking-[-0.02em] text-foreground"
+            className="rounded-sm font-serif text-[24px] font-medium leading-none tracking-[-0.02em] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Ledger.
           </Link>
@@ -46,7 +49,7 @@ export function AppShell({
                   key={item.label}
                   to={item.to}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`px-2.5 py-2 text-[13px] leading-none transition-colors ${
+                  className={`rounded-sm px-2.5 py-2 text-[13px] leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                     isActive
                       ? 'font-semibold text-foreground'
                       : 'font-normal text-[var(--color-sidebar-muted)] hover:text-foreground'
@@ -61,7 +64,7 @@ export function AppShell({
         {showProfileBlock && (
           <Link
             to="/settings"
-            className="flex items-center gap-2.5 border-t border-border pt-3.5 pb-0.5"
+            className="flex items-center gap-2.5 rounded-sm border-t border-border pt-3.5 pb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <div
               aria-hidden
@@ -81,7 +84,9 @@ export function AppShell({
           </Link>
         )}
       </div>
-      <main className="flex-1 px-10 py-16">{children}</main>
+      <main id="main-content" className="flex-1 px-10 py-16">
+        {children}
+      </main>
     </div>
   )
 }

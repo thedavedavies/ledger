@@ -4,6 +4,7 @@ import { ClientForm } from '#/components/ClientForm'
 import { createClient } from '#/server/clients.fn'
 
 export const Route = createFileRoute('/clients/new')({
+  head: () => ({ meta: [{ title: 'New client · Ledger' }] }),
   component: NewClientPage,
 })
 

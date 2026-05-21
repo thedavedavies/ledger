@@ -175,6 +175,19 @@ describe('invoiceInput', () => {
     expect(invoiceInput.safeParse({ ...validInvoice, taxRate: '101' }).success).toBe(false)
   })
 
+  it('rejects a due date before the issue date', () => {
+    const result = invoiceInput.safeParse({
+      ...validInvoice,
+      issueDate: '2026-05-09',
+      dueDate: '2026-05-08',
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path.join('.') === 'dueDate')).toBe(true)
+    }
+  })
+
   it('rejects malformed dates', () => {
     expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026-13-01' }).success).toBe(false)
     expect(invoiceInput.safeParse({ ...validInvoice, issueDate: 'today' }).success).toBe(false)

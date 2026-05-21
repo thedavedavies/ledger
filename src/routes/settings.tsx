@@ -17,6 +17,7 @@ import { companyProfileInput } from '#/lib/validators'
 import { CURRENCIES } from '#/lib/currency'
 
 export const Route = createFileRoute('/settings')({
+  head: () => ({ meta: [{ title: 'Settings · Ledger' }] }),
   loader: () => getCompanyProfile(),
   component: SettingsPage,
 })
@@ -287,9 +288,13 @@ function SettingsPage() {
         <div className="flex items-center gap-3 border-t pt-6">
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-                Save changes
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting || undefined}
+              >
+                {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                {isSubmitting ? 'Saving…' : 'Save changes'}
               </Button>
             )}
           </form.Subscribe>

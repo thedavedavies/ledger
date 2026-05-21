@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer'
+import { formatDateOnly } from '#/lib/date-only'
 import { formatMoney } from '#/lib/money'
 
 Font.register({
@@ -220,11 +221,7 @@ export interface InvoiceTemplateProps {
 }
 
 function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDateOnly(date)
 }
 
 function companyAddress(c: InvoiceTemplateProps['company']): string {

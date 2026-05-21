@@ -321,7 +321,7 @@ export function InvoiceForm({
                     })
                   }
                 >
-                  <Plus className="size-3.5" />
+                  <Plus className="size-3.5" aria-hidden="true" />
                   Add line
                 </Button>
               </div>
@@ -412,9 +412,13 @@ export function InvoiceForm({
       <div className="flex items-center gap-3 border-t pt-6">
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-              {submitLabel}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting || undefined}
+            >
+              {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {isSubmitting ? 'Saving…' : submitLabel}
             </Button>
           )}
         </form.Subscribe>

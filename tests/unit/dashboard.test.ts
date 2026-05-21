@@ -12,15 +12,19 @@ import {
   type RawPayment,
 } from '#/lib/dashboard'
 
-const ref = new Date(2026, 4, 11) // 11 May 2026 (month index 4)
+function utcDate(year: number, monthIndex: number, day = 1, hour = 0, minute = 0): Date {
+  return new Date(Date.UTC(year, monthIndex, day, hour, minute))
+}
+
+const ref = utcDate(2026, 4, 11) // 11 May 2026 (month index 4)
 
 function inv(partial: Partial<RawInvoice>): RawInvoice {
   return {
     id: 'i1',
     number: 'INV-2026-001',
     status: 'sent',
-    issueDate: new Date(2026, 4, 1),
-    dueDate: new Date(2026, 5, 1),
+    issueDate: utcDate(2026, 4, 1),
+    dueDate: utcDate(2026, 5, 1),
     totalCents: 100000n,
     clientName: 'Acme',
     ...partial,
@@ -31,39 +35,39 @@ function pay(partial: Partial<RawPayment>): RawPayment {
   return {
     invoiceId: 'i1',
     amountCents: 10000n,
-    paidAt: new Date(2026, 4, 5),
+    paidAt: utcDate(2026, 4, 5),
     ...partial,
   }
 }
 
 describe('startOfMonth', () => {
-  it('returns the first day of the month at local midnight', () => {
-    const result = startOfMonth(new Date(2026, 4, 15, 13, 30))
-    expect(result.getFullYear()).toBe(2026)
-    expect(result.getMonth()).toBe(4)
-    expect(result.getDate()).toBe(1)
-    expect(result.getHours()).toBe(0)
+  it('returns the first day of the month at UTC midnight', () => {
+    const result = startOfMonth(utcDate(2026, 4, 15, 13, 30))
+    expect(result.getUTCFullYear()).toBe(2026)
+    expect(result.getUTCMonth()).toBe(4)
+    expect(result.getUTCDate()).toBe(1)
+    expect(result.getUTCHours()).toBe(0)
   })
 })
 
 describe('addMonths', () => {
   it('rolls forward past year end', () => {
-    const result = addMonths(new Date(2026, 10, 1), 3) // Nov + 3 = Feb 2027
-    expect(result.getFullYear()).toBe(2027)
-    expect(result.getMonth()).toBe(1)
+    const result = addMonths(utcDate(2026, 10, 1), 3) // Nov + 3 = Feb 2027
+    expect(result.getUTCFullYear()).toBe(2027)
+    expect(result.getUTCMonth()).toBe(1)
   })
 
   it('rolls backward past year start', () => {
-    const result = addMonths(new Date(2026, 1, 1), -3) // Feb - 3 = Nov 2025
-    expect(result.getFullYear()).toBe(2025)
-    expect(result.getMonth()).toBe(10)
+    const result = addMonths(utcDate(2026, 1, 1), -3) // Feb - 3 = Nov 2025
+    expect(result.getUTCFullYear()).toBe(2025)
+    expect(result.getUTCMonth()).toBe(10)
   })
 })
 
 describe('monthKey', () => {
   it('zero pads month', () => {
-    expect(monthKey(new Date(2026, 0, 15))).toBe('2026-01')
-    expect(monthKey(new Date(2026, 11, 31))).toBe('2026-12')
+    expect(monthKey(utcDate(2026, 0, 15))).toBe('2026-01')
+    expect(monthKey(utcDate(2026, 11, 31))).toBe('2026-12')
   })
 })
 
@@ -85,9 +89,9 @@ describe('buildMonthlySeries', () => {
   it('buckets invoices into their issue-date month', () => {
     const series = buildMonthlySeries(
       [
-        inv({ id: 'a', totalCents: 100000n, issueDate: new Date(2026, 4, 2) }),
-        inv({ id: 'b', totalCents: 200000n, issueDate: new Date(2026, 4, 20) }),
-        inv({ id: 'c', totalCents: 50000n, issueDate: new Date(2026, 3, 15) }),
+        inv({ id: 'a', totalCents: 100000n, issueDate: utcDate(2026, 4, 2) }),
+        inv({ id: 'b', totalCents: 200000n, issueDate: utcDate(2026, 4, 20) }),
+        inv({ id: 'c', totalCents: 50000n, issueDate: utcDate(2026, 3, 15) }),
       ],
       ref,
     )
@@ -111,7 +115,7 @@ describe('buildMonthlySeries', () => {
 
   it('ignores invoices outside the 12-month window', () => {
     const series = buildMonthlySeries(
-      [inv({ id: 'old', totalCents: 999999n, issueDate: new Date(2024, 0, 1) })],
+      [inv({ id: 'old', totalCents: 999999n, issueDate: utcDate(2024, 0, 1) })],
       ref,
     )
     const total = series.reduce((s, b) => s + b.totalCents, 0n)
@@ -165,12 +169,12 @@ describe('buildOutstandingInvoices', () => {
         inv({
           id: 'past',
           status: 'sent',
-          dueDate: new Date(2026, 3, 1), // April: before May 11 ref
+          dueDate: utcDate(2026, 3, 1), // April: before May 11 ref
         }),
         inv({
           id: 'future',
           status: 'sent',
-          dueDate: new Date(2026, 5, 1), // June: after May 11 ref
+          dueDate: utcDate(2026, 5, 1), // June: after May 11 ref
         }),
       ],
       [],
@@ -184,9 +188,9 @@ describe('buildOutstandingInvoices', () => {
   it('sorts oldest due first', () => {
     const result = buildOutstandingInvoices(
       [
-        inv({ id: 'c', dueDate: new Date(2026, 6, 1) }),
-        inv({ id: 'a', dueDate: new Date(2026, 3, 1) }),
-        inv({ id: 'b', dueDate: new Date(2026, 5, 1) }),
+        inv({ id: 'c', dueDate: utcDate(2026, 6, 1) }),
+        inv({ id: 'a', dueDate: utcDate(2026, 3, 1) }),
+        inv({ id: 'b', dueDate: utcDate(2026, 5, 1) }),
       ],
       [],
       ref,
@@ -198,14 +202,14 @@ describe('buildOutstandingInvoices', () => {
 describe('computeKpi', () => {
   it('separates this-month and last-month windows', () => {
     const invoices: RawInvoice[] = [
-      inv({ id: 'thisMay', issueDate: new Date(2026, 4, 5), totalCents: 200000n }),
-      inv({ id: 'thisMay2', issueDate: new Date(2026, 4, 30), totalCents: 100000n }),
-      inv({ id: 'apr', issueDate: new Date(2026, 3, 10), totalCents: 150000n }),
-      inv({ id: 'mar', issueDate: new Date(2026, 2, 1), totalCents: 999n }),
+      inv({ id: 'thisMay', issueDate: utcDate(2026, 4, 5), totalCents: 200000n }),
+      inv({ id: 'thisMay2', issueDate: utcDate(2026, 4, 30), totalCents: 100000n }),
+      inv({ id: 'apr', issueDate: utcDate(2026, 3, 10), totalCents: 150000n }),
+      inv({ id: 'mar', issueDate: utcDate(2026, 2, 1), totalCents: 999n }),
     ]
     const payments: RawPayment[] = [
-      pay({ invoiceId: 'apr', amountCents: 50000n, paidAt: new Date(2026, 4, 1) }),
-      pay({ invoiceId: 'apr', amountCents: 30000n, paidAt: new Date(2026, 3, 15) }),
+      pay({ invoiceId: 'apr', amountCents: 50000n, paidAt: utcDate(2026, 4, 1) }),
+      pay({ invoiceId: 'apr', amountCents: 30000n, paidAt: utcDate(2026, 3, 15) }),
     ]
     const outstanding = buildOutstandingInvoices(invoices, payments, ref)
     const kpi = computeKpi(invoices, payments, outstanding, ref)
@@ -217,8 +221,8 @@ describe('computeKpi', () => {
 
   it('excludes void invoices from invoiced KPIs', () => {
     const invoices = [
-      inv({ id: 'a', status: 'sent', issueDate: new Date(2026, 4, 1), totalCents: 100000n }),
-      inv({ id: 'b', status: 'void', issueDate: new Date(2026, 4, 1), totalCents: 999999n }),
+      inv({ id: 'a', status: 'sent', issueDate: utcDate(2026, 4, 1), totalCents: 100000n }),
+      inv({ id: 'b', status: 'void', issueDate: utcDate(2026, 4, 1), totalCents: 999999n }),
     ]
     const kpi = computeKpi(invoices, [], [], ref)
     expect(kpi.invoicedThisMonthCents).toBe(100000n)

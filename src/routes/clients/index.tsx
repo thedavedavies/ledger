@@ -4,6 +4,7 @@ import { Button } from '#/components/ui/button'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -12,6 +13,7 @@ import {
 import { listClients } from '#/server/clients.fn'
 
 export const Route = createFileRoute('/clients/')({
+  head: () => ({ meta: [{ title: 'Clients · Ledger' }] }),
   loader: () => listClients(),
   component: ClientsListPage,
 })
@@ -26,7 +28,7 @@ function ClientsListPage() {
         {clients.length > 0 && (
           <Button asChild>
             <Link to="/clients/new">
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
               New client
             </Link>
           </Button>
@@ -38,7 +40,7 @@ function ClientsListPage() {
           <p className="text-muted-foreground">No clients yet</p>
           <Button asChild className="mt-4">
             <Link to="/clients/new">
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
               New client
             </Link>
           </Button>
@@ -46,6 +48,7 @@ function ClientsListPage() {
       ) : (
         <div className="mt-6">
           <Table>
+            <TableCaption className="sr-only">Clients</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Contact</TableHead>
@@ -74,6 +77,7 @@ function ClientsListPage() {
                     <Button variant="ghost" size="sm" asChild>
                       <Link to="/clients/$clientId" params={{ clientId: c.id }}>
                         Edit
+                        <span className="sr-only"> {c.name}</span>
                       </Link>
                     </Button>
                   </TableCell>

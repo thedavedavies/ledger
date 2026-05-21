@@ -155,6 +155,18 @@ describe('invoiceInput validator', () => {
     expect(result.success).toBe(false)
   })
 
+  it('rejects due date before issue date', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      issueDate: '2026-05-31',
+      dueDate: '2026-05-01',
+      taxRate: '0',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(false)
+  })
+
   it('accepts exactly 100 line items', () => {
     const lines = Array.from({ length: 100 }, () => validLine)
     const result = invoiceInput.safeParse({

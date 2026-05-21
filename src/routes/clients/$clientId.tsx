@@ -14,6 +14,7 @@ import {
 import { deleteClient, getClient, updateClient } from '#/server/clients.fn'
 
 export const Route = createFileRoute('/clients/$clientId')({
+  head: () => ({ meta: [{ title: 'Client · Ledger' }] }),
   loader: ({ params }) => getClient({ data: { id: params.clientId } }),
   component: EditClientPage,
   notFoundComponent: ClientNotFound,

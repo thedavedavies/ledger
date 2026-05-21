@@ -62,15 +62,19 @@ const MONTH_LONG = [
 ]
 
 export function startOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1)
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))
 }
 
 export function addMonths(d: Date, n: number): Date {
-  return new Date(d.getFullYear(), d.getMonth() + n, 1)
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1))
 }
 
 export function monthKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function startOfUtcDay(d: Date): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
 }
 
 // Returns the most recent `count` months (oldest first) ending at the month
@@ -83,10 +87,10 @@ export function emptyMonthlySeries(reference: Date, count: number): MonthBucket[
     const d = addMonths(end, -i)
     out.push({
       key: monthKey(d),
-      year: d.getFullYear(),
-      month: d.getMonth(),
-      shortLabel: MONTH_SHORT[d.getMonth()]!,
-      longLabel: `${MONTH_LONG[d.getMonth()]} ${d.getFullYear()}`,
+      year: d.getUTCFullYear(),
+      month: d.getUTCMonth(),
+      shortLabel: MONTH_SHORT[d.getUTCMonth()]!,
+      longLabel: `${MONTH_LONG[d.getUTCMonth()]} ${d.getUTCFullYear()}`,
       totalCents: 0n,
     })
   }
@@ -137,6 +141,7 @@ export function buildOutstandingInvoices(
     paidByInvoice.set(p.invoiceId, (paidByInvoice.get(p.invoiceId) ?? 0n) + p.amountCents)
   }
 
+  const referenceDay = startOfUtcDay(reference)
   const out: OutstandingInvoice[] = []
   for (const inv of invoices) {
     if (inv.status !== 'sent') continue
@@ -150,7 +155,7 @@ export function buildOutstandingInvoices(
       issueDate: inv.issueDate,
       dueDate: inv.dueDate,
       balanceCents: balance,
-      isOverdue: inv.dueDate < reference,
+      isOverdue: inv.dueDate < referenceDay,
     })
   }
   // Oldest due first, most urgent at the top.

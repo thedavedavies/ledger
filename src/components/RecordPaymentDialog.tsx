@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
+import { localDateToDateOnly } from '#/lib/date-only'
 import { toCents } from '#/lib/money'
 import { PAYMENT_METHODS, paymentInput, type PaymentInput } from '#/lib/validators'
 import { createPayment } from '#/server/payments.fn'
@@ -36,13 +37,18 @@ interface Props {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10)
+  return localDateToDateOnly()
 }
 
 function defaultAmount(balanceCents: bigint) {
   if (balanceCents <= 0n) return '0.00'
   const major = Number(balanceCents) / 100
   return major.toFixed(2)
+}
+
+function paymentErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message
+  return 'Could not record payment. Please try again.'
 }
 
 export function RecordPaymentDialog({
@@ -83,8 +89,8 @@ export function RecordPaymentDialog({
         form.reset()
         await router.invalidate()
         onOpenChange(false)
-      } catch {
-        toast.error('Could not record payment. Please try again.')
+      } catch (err) {
+        toast.error(paymentErrorMessage(err))
       }
     },
   })
@@ -237,9 +243,17 @@ export function RecordPaymentDialog({
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-                      Record{formatted ? ` ${formatted}` : ''}
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      aria-busy={isSubmitting || undefined}
+                    >
+                      {isSubmitting && (
+                        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                      )}
+                      {isSubmitting
+                        ? 'Recording…'
+                        : `Record${formatted ? ` ${formatted}` : ''}`}
                     </Button>
                   </>
                 )

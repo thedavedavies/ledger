@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { dateOnlyToUtcDate } from '#/lib/date-only'
 import { invoiceInput, invoiceStatusInput } from '#/lib/validators'
 import { toCents, computeInvoiceTotals } from '#/lib/money'
 import { allocateInvoiceNumber } from './numbering'
@@ -84,7 +85,9 @@ export const createInvoice = createServerFn({ method: 'POST' })
     const totals = computeInvoiceTotals(lines, taxRate)
     // Use UTC so a `YYYY-MM-DD` issueDate doesn't shift into the previous
     // calendar year on negative-offset servers (e.g. 2026-01-01 in UTC-5).
-    const issueYear = new Date(data.issueDate).getUTCFullYear()
+    const issueDate = dateOnlyToUtcDate(data.issueDate)
+    const dueDate = dateOnlyToUtcDate(data.dueDate)
+    const issueYear = issueDate.getUTCFullYear()
 
     const created = await db.transaction(async (tx) => {
       const invoiceNumber = await allocateInvoiceNumber(tx, issueYear, prefix)
@@ -94,8 +97,8 @@ export const createInvoice = createServerFn({ method: 'POST' })
         .values({
           number: invoiceNumber,
           clientId: data.clientId,
-          issueDate: new Date(data.issueDate),
-          dueDate: new Date(data.dueDate),
+          issueDate,
+          dueDate,
           taxRate: String(taxRate),
           subtotalCents: totals.subtotalCents,
           taxCents: totals.taxCents,
@@ -139,6 +142,8 @@ export const updateInvoice = createServerFn({ method: 'POST' })
     }
 
     const taxRate = fields.taxRate === '' ? 0 : Number(fields.taxRate)
+    const issueDate = dateOnlyToUtcDate(fields.issueDate)
+    const dueDate = dateOnlyToUtcDate(fields.dueDate)
 
     const lines = fields.lineItems.map((li) => ({
       quantity: li.quantity,
@@ -152,8 +157,8 @@ export const updateInvoice = createServerFn({ method: 'POST' })
         .update(invoice)
         .set({
           clientId: fields.clientId,
-          issueDate: new Date(fields.issueDate),
-          dueDate: new Date(fields.dueDate),
+          issueDate,
+          dueDate,
           taxRate: String(taxRate),
           subtotalCents: totals.subtotalCents,
           taxCents: totals.taxCents,

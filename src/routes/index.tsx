@@ -4,18 +4,21 @@ import { Button } from '#/components/ui/button'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
 import { MonthlyBarChart } from '#/components/dashboard/MonthlyBarChart'
+import { formatDateOnly } from '#/lib/date-only'
 import { percentChange } from '#/lib/dashboard'
 import { formatMoney } from '#/lib/money'
 import { getDashboardData } from '#/server/dashboard.fn'
 import { getCompanyProfile } from '#/server/settings.fn'
 
 export const Route = createFileRoute('/')({
+  head: () => ({ meta: [{ title: 'Dashboard · Ledger' }] }),
   loader: async () => {
     const [data, profile] = await Promise.all([getDashboardData(), getCompanyProfile()])
     return { data, profile }
@@ -24,11 +27,7 @@ export const Route = createFileRoute('/')({
 })
 
 function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDateOnly(date)
 }
 
 function DeltaLabel({
@@ -116,7 +115,7 @@ function DashboardPage() {
         <h1 className="text-3xl font-normal tracking-tight">Dashboard</h1>
         <Button asChild>
           <Link to="/invoices/new">
-            <Plus className="size-4" />
+            <Plus className="size-4" aria-hidden="true" />
             New invoice
           </Link>
         </Button>
@@ -187,6 +186,7 @@ function DashboardPage() {
         ) : (
           <div className="mt-4">
             <Table>
+              <TableCaption className="sr-only">Outstanding invoices</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Number</TableHead>

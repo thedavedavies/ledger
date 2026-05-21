@@ -13,11 +13,13 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { dateOnlyToUtcDate, formatDateOnly, localDateToDateOnly } from '#/lib/date-only'
 import { formatMoney } from '#/lib/money'
 import { getCompanyProfile } from '#/server/settings.fn'
 import { listClients } from '#/server/clients.fn'
@@ -30,6 +32,7 @@ type DatePreset = 'all' | 'this-month' | 'last-month' | 'this-quarter' | 'this-y
 const PAGE_SIZE = 25
 
 export const Route = createFileRoute('/invoices/')({
+  head: () => ({ meta: [{ title: 'Invoices · Ledger' }] }),
   loader: async () => {
     const [invoices, clients, profile] = await Promise.all([
       listInvoices(),
@@ -59,37 +62,34 @@ function StatusBadge({ status, overdue }: { status: InvoiceStatus; overdue?: boo
 }
 
 function startOfToday(): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
+  return dateOnlyToUtcDate(localDateToDateOnly())
 }
 
 function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDateOnly(date)
 }
 
 // End is exclusive (start of next period). Returns null for 'all'.
 function dateRangeFor(preset: DatePreset, today: Date): { start: Date; end: Date } | null {
   if (preset === 'all') return null
-  const y = today.getFullYear()
-  const m = today.getMonth()
+  const y = today.getUTCFullYear()
+  const m = today.getUTCMonth()
   switch (preset) {
     case 'this-month':
-      return { start: new Date(y, m, 1), end: new Date(y, m + 1, 1) }
+      return { start: new Date(Date.UTC(y, m, 1)), end: new Date(Date.UTC(y, m + 1, 1)) }
     case 'last-month':
-      return { start: new Date(y, m - 1, 1), end: new Date(y, m, 1) }
+      return { start: new Date(Date.UTC(y, m - 1, 1)), end: new Date(Date.UTC(y, m, 1)) }
     case 'this-quarter': {
       const qStart = Math.floor(m / 3) * 3
-      return { start: new Date(y, qStart, 1), end: new Date(y, qStart + 3, 1) }
+      return {
+        start: new Date(Date.UTC(y, qStart, 1)),
+        end: new Date(Date.UTC(y, qStart + 3, 1)),
+      }
     }
     case 'this-year':
-      return { start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1) }
+      return { start: new Date(Date.UTC(y, 0, 1)), end: new Date(Date.UTC(y + 1, 0, 1)) }
     case 'last-year':
-      return { start: new Date(y - 1, 0, 1), end: new Date(y, 0, 1) }
+      return { start: new Date(Date.UTC(y - 1, 0, 1)), end: new Date(Date.UTC(y, 0, 1)) }
   }
 }
 
@@ -210,7 +210,7 @@ function InvoicesPage() {
         {invoices.length > 0 && (
           <Button asChild>
             <Link to="/invoices/new">
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
               New invoice
             </Link>
           </Button>
@@ -222,7 +222,7 @@ function InvoicesPage() {
           <p className="text-muted-foreground">No invoices yet</p>
           <Button asChild className="mt-4">
             <Link to="/invoices/new">
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
               New invoice
             </Link>
           </Button>
@@ -289,7 +289,7 @@ function InvoicesPage() {
             </Select>
             {filtersActive && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="size-4" />
+                <X className="size-4" aria-hidden="true" />
                 Clear
               </Button>
             )}
@@ -306,6 +306,7 @@ function InvoicesPage() {
             <>
               <div className="mt-4">
                 <Table>
+                  <TableCaption className="sr-only">Invoices</TableCaption>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Number</TableHead>
@@ -413,7 +414,7 @@ function Pagination({
             disabled={page <= 1}
             aria-label="Previous page"
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-4" aria-hidden="true" />
             Previous
           </Button>
           {items.map((it, idx) =>
@@ -447,7 +448,7 @@ function Pagination({
             aria-label="Next page"
           >
             Next
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4" aria-hidden="true" />
           </Button>
         </div>
       )}
