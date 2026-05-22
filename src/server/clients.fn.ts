@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { desc, eq, sql } from 'drizzle-orm'
+import { desc, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { clientInput } from '#/lib/validators'
 import { db } from './db'
@@ -104,4 +104,33 @@ export const deleteClient = createServerFn({ method: 'POST' })
     }
 
     return { success: true as const }
+  })
+
+export const deleteClients = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }))
+  .handler(async ({ data }) => {
+    // Find which of the requested clients still have invoices; those can't be
+    // deleted because invoice.clientId has no ON DELETE CASCADE.
+    const referencingRows = await db
+      .selectDistinct({ clientId: invoice.clientId })
+      .from(invoice)
+      .where(inArray(invoice.clientId, data.ids))
+
+    const blockedIds = new Set(referencingRows.map((r) => r.clientId))
+    const deletableIds = data.ids.filter((id) => !blockedIds.has(id))
+
+    let deletedCount = 0
+    if (deletableIds.length > 0) {
+      const deleted = await db
+        .delete(client)
+        .where(inArray(client.id, deletableIds))
+        .returning({ id: client.id })
+      deletedCount = deleted.length
+    }
+
+    return {
+      success: true as const,
+      deletedCount,
+      skippedCount: blockedIds.size,
+    }
   })
