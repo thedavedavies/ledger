@@ -1,7 +1,17 @@
-import { useMemo, useState } from 'react'
-import { Link, createFileRoute } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
+import { ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import {
   Select,
@@ -23,7 +33,7 @@ import { dateOnlyToUtcDate, formatDateOnly, localDateToDateOnly } from '#/lib/da
 import { formatMoney } from '#/lib/money'
 import { getCompanyProfile } from '#/server/settings.fn'
 import { listClients } from '#/server/clients.fn'
-import { listInvoices } from '#/server/invoices.fn'
+import { deleteInvoices, listInvoices } from '#/server/invoices.fn'
 import type { InvoiceStatus } from '#/server/schema'
 
 type StatusFilter = InvoiceStatus | 'all' | 'overdue'
@@ -108,6 +118,7 @@ function pageItems(current: number, total: number): (number | 'gap')[] {
 
 function InvoicesPage() {
   const { invoices, clients, profile } = Route.useLoaderData()
+  const router = useRouter()
   const needsSetup = !profile.businessName
   const currency = profile.defaultCurrency || 'USD'
 
@@ -116,6 +127,9 @@ function InvoicesPage() {
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<DatePreset>('all')
   const [page, setPage] = useState(1)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [showBulkDelete, setShowBulkDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const today = useMemo(() => startOfToday(), [])
 
@@ -193,6 +207,70 @@ function InvoicesPage() {
   const pageStart = (safePage - 1) * PAGE_SIZE
   const pageEnd = Math.min(pageStart + PAGE_SIZE, filtered.length)
   const pageRows = filtered.slice(pageStart, pageEnd)
+
+  // Drop selections for rows that are no longer visible (filter narrowed,
+  // invoice deleted, etc.) so the action bar count never misleads.
+  useEffect(() => {
+    if (selectedIds.size === 0) return
+    const visibleIds = new Set(filtered.map((i) => i.id))
+    let changed = false
+    const next = new Set<string>()
+    for (const id of selectedIds) {
+      if (visibleIds.has(id)) next.add(id)
+      else changed = true
+    }
+    if (changed) setSelectedIds(next)
+  }, [filtered, selectedIds])
+
+  const pageSelectedCount = pageRows.reduce((n, r) => n + (selectedIds.has(r.id) ? 1 : 0), 0)
+  const allPageSelected = pageRows.length > 0 && pageSelectedCount === pageRows.length
+  const somePageSelected = pageSelectedCount > 0 && !allPageSelected
+  const headerCheckedState: boolean | 'indeterminate' = allPageSelected
+    ? true
+    : somePageSelected
+      ? 'indeterminate'
+      : false
+
+  function toggleRow(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  function togglePage(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      for (const row of pageRows) {
+        if (checked) next.add(row.id)
+        else next.delete(row.id)
+      }
+      return next
+    })
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setDeleting(true)
+    try {
+      await deleteInvoices({ data: { ids } })
+      toast.success(ids.length === 1 ? 'Invoice deleted' : `${ids.length} invoices deleted`)
+      setShowBulkDelete(false)
+      clearSelection()
+      await router.invalidate()
+    } catch {
+      toast.error('Something went wrong. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div>
@@ -304,11 +382,50 @@ function InvoicesPage() {
             </div>
           ) : (
             <>
+              {selectedIds.size > 0 && (
+                <div
+                  role="region"
+                  aria-label="Bulk actions"
+                  className="mt-4 flex items-center justify-between rounded-md border border-border bg-muted/50 px-3 py-2"
+                >
+                  <p className="text-sm">
+                    <span className="font-medium">{selectedIds.size}</span>
+                    <span className="text-muted-foreground">
+                      {selectedIds.size === 1 ? ' invoice selected' : ' invoices selected'}
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={clearSelection}>
+                      Clear
+                    </Button>
+                    <Button
+                      variant="destructiveOutline"
+                      size="sm"
+                      onClick={() => setShowBulkDelete(true)}
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4">
                 <Table>
                   <TableCaption className="sr-only">Invoices</TableCaption>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[36px]">
+                        <Checkbox
+                          checked={headerCheckedState}
+                          onCheckedChange={(c) => togglePage(c === true)}
+                          aria-label={
+                            allPageSelected
+                              ? 'Deselect all invoices on this page'
+                              : 'Select all invoices on this page'
+                          }
+                        />
+                      </TableHead>
                       <TableHead>Number</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Issued</TableHead>
@@ -323,11 +440,20 @@ function InvoicesPage() {
                   <TableBody>
                     {pageRows.map((inv) => {
                       const isOverdue = inv.status === 'sent' && new Date(inv.dueDate) < today
+                      const isSelected = selectedIds.has(inv.id)
                       return (
                         <TableRow
                           key={inv.id}
+                          data-state={isSelected ? 'selected' : undefined}
                           className={inv.status === 'void' ? 'line-through opacity-60' : ''}
                         >
+                          <TableCell>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(c) => toggleRow(inv.id, c === true)}
+                              aria-label={`Select invoice ${inv.number}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">
                             <Link
                               to="/invoices/$invoiceId"
@@ -374,6 +500,38 @@ function InvoicesPage() {
               />
             </>
           )}
+
+          <Dialog
+            open={showBulkDelete}
+            onOpenChange={(open) => !open && !deleting && setShowBulkDelete(false)}
+          >
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedIds.size === 1
+                    ? 'Delete this invoice?'
+                    : `Delete ${selectedIds.size} invoices?`}
+                </DialogTitle>
+                <DialogDescription>
+                  This will remove the selected{' '}
+                  {selectedIds.size === 1 ? 'invoice and its line items' : 'invoices and their line items'}{' '}
+                  permanently. This cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBulkDelete(false)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleBulkDelete} disabled={deleting}>
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>

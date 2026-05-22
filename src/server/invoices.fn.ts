@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { dateOnlyToUtcDate } from '#/lib/date-only'
 import { invoiceInput, invoiceStatusInput } from '#/lib/validators'
@@ -200,6 +200,17 @@ export const deleteInvoice = createServerFn({ method: 'POST' })
     }
 
     return { success: true as const }
+  })
+
+export const deleteInvoices = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }))
+  .handler(async ({ data }) => {
+    const deleted = await db
+      .delete(invoice)
+      .where(inArray(invoice.id, data.ids))
+      .returning({ id: invoice.id })
+
+    return { success: true as const, deletedCount: deleted.length }
   })
 
 export const updateInvoiceStatus = createServerFn({ method: 'POST' })
