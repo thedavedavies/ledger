@@ -288,7 +288,7 @@ export function InvoiceForm({
                               size="sm"
                               label={`Remove line item ${i + 1}`}
                               aria-disabled={field.state.value.length <= 1 || undefined}
-                              className="h-8 w-8 cursor-pointer p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
+                              className="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
                               onClick={() => {
                                 if (field.state.value.length <= 1) return
                                 field.removeValue(i)

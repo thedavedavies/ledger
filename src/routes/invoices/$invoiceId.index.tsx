@@ -406,7 +406,7 @@ function InvoiceViewPage() {
                       size="sm"
                       label={`Remove payment of ${fmt(p.amountCents)} on ${formatDate(p.paidAt)}`}
                       onClick={() => setDeletePaymentId(p.id)}
-                      className="ml-auto h-8 w-8 cursor-pointer p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      className="ml-auto h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
                       <X className="size-4" aria-hidden="true" />
                     </IconButton>

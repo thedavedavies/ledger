@@ -53,7 +53,7 @@ function DropdownMenuItem({
       data-inset={inset || undefined}
       data-variant={variant}
       className={cn(
-        'relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none transition-colors',
+        'relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none transition-colors',
         'focus:bg-accent focus:text-accent-foreground',
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         'data-[inset]:pl-8',
@@ -94,7 +94,7 @@ function DropdownMenuSubTrigger({
     <DropdownMenuPrimitive.SubTrigger
       data-inset={inset || undefined}
       className={cn(
-        'flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none',
+        'flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none',
         'focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
         'data-[inset]:pl-8',
         className,
@@ -139,7 +139,7 @@ function DropdownMenuRadioItem({
   return (
     <DropdownMenuPrimitive.RadioItem
       className={cn(
-        'relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none',
+        'relative flex cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none',
         'focus:bg-accent focus:text-accent-foreground',
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         className,
