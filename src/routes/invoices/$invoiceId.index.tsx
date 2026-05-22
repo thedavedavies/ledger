@@ -174,11 +174,7 @@ function InvoiceViewPage() {
         </div>
         <div className="flex items-center justify-end gap-2">
           {inv.status === 'draft' && (
-            <Button
-              onClick={handleSend}
-              disabled={sending}
-              aria-busy={sending || undefined}
-            >
+            <Button onClick={handleSend} disabled={sending} aria-busy={sending || undefined}>
               <Send className="size-4" aria-hidden="true" />
               {sending ? 'Sending…' : 'Send'}
             </Button>

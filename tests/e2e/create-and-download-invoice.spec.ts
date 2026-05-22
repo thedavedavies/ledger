@@ -98,9 +98,7 @@ test('record and remove a payment', async ({ page }) => {
 })
 
 test('PDF route returns 404 for an unknown invoice', async ({ page }) => {
-  const response = await page.request.get(
-    '/api/invoices/00000000-0000-4000-8000-000000000000/pdf',
-  )
+  const response = await page.request.get('/api/invoices/00000000-0000-4000-8000-000000000000/pdf')
 
   expect(response.status()).toBe(404)
   await expect(response.text()).resolves.toBe('Invoice not found')

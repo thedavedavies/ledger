@@ -7,10 +7,9 @@ import { compareDateOnly, isValidDateOnly } from './date-only'
 // and would otherwise pass a naive isFinite check, so verify the parsed
 // components round-trip back to the same numbers we read out of the string.
 const dateString = (label: string) =>
-  z.string().refine(
-    (v) => isValidDateOnly(v),
-    { message: `${label} must be a valid date (YYYY-MM-DD)` },
-  )
+  z
+    .string()
+    .refine((v) => isValidDateOnly(v), { message: `${label} must be a valid date (YYYY-MM-DD)` })
 
 // At most two decimal places, no scientific notation, no Infinity/NaN.
 // Prevents '0.001' (silently rounds to $0.00) and 'Infinity' (crashes

@@ -251,9 +251,7 @@ export function RecordPaymentDialog({
                       {isSubmitting && (
                         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                       )}
-                      {isSubmitting
-                        ? 'Recording…'
-                        : `Record${formatted ? ` ${formatted}` : ''}`}
+                      {isSubmitting ? 'Recording…' : `Record${formatted ? ` ${formatted}` : ''}`}
                     </Button>
                   </>
                 )
