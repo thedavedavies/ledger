@@ -288,8 +288,8 @@ function InvoiceViewPage() {
               </TableHeader>
               <TableBody>
                 {inv.lineItems.map((li) => (
-                  <TableRow key={li.id}>
-                    <TableCell>{li.description}</TableCell>
+                  <TableRow key={li.id} className="[&>td]:align-top">
+                    <TableCell className="whitespace-pre-line">{li.description}</TableCell>
                     <TableCell className="text-right tabular-nums">{li.quantity}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {fmt(li.unitPriceCents)}

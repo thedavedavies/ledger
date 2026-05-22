@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { Textarea } from '#/components/ui/textarea'
 import { invoiceInput, type InvoiceInput } from '#/lib/validators'
 import { fromCents, toCents, computeInvoiceTotals, formatMoney, currencySymbol } from '#/lib/money'
 
@@ -73,7 +74,7 @@ export function InvoiceForm({
   onSubmit,
   submitLabel,
 }: InvoiceFormProps) {
-  const descriptionRefs = useRef<Map<number, HTMLInputElement>>(new Map())
+  const descriptionRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map())
   const lineIdBase = useId()
   const symbol = currencySymbol(currency)
 
@@ -207,26 +208,24 @@ export function InvoiceForm({
                         const qtyId = `${lineIdBase}-${i}-quantity`
                         const priceId = `${lineIdBase}-${i}-unit-price`
                         return (
-                          <div className="grid grid-cols-[1fr_80px_120px_100px_40px] items-center gap-2 border-b px-3 py-2 last:border-b-0">
+                          <div className="grid grid-cols-[1fr_80px_120px_100px_40px] items-start gap-2 border-b px-3 py-2 last:border-b-0">
                             <form.Field name={`lineItems[${i}].description`}>
                               {(descField) => (
                                 <div>
                                   <label htmlFor={descId} className="sr-only">
                                     Description for line item {i + 1}
                                   </label>
-                                  <Input
+                                  <Textarea
                                     id={descId}
                                     ref={(el) => {
                                       if (el) descriptionRefs.current.set(i, el)
                                       else descriptionRefs.current.delete(i)
                                     }}
+                                    rows={1}
                                     value={descField.state.value}
                                     onBlur={descField.handleBlur}
                                     onChange={(e) => descField.handleChange(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') e.preventDefault()
-                                    }}
-                                    className="h-8 text-sm"
+                                    className="min-h-8 resize-y px-3 py-1 text-sm leading-6 field-sizing-content"
                                   />
                                 </div>
                               )}
