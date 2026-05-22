@@ -96,7 +96,7 @@ function InvoiceViewPage() {
     try {
       await deleteInvoice({ data: { id: inv.id } })
       toast.success('Invoice deleted')
-      await navigate({ to: '/' })
+      await navigate({ to: '/invoices' })
     } catch {
       toast.error('Something went wrong. Please try again.')
     } finally {
