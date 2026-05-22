@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react'
@@ -127,7 +127,7 @@ function InvoicesPage() {
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<DatePreset>('all')
   const [page, setPage] = useState(1)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [rawSelectedIds, setRawSelectedIds] = useState<Set<string>>(() => new Set())
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -208,19 +208,19 @@ function InvoicesPage() {
   const pageEnd = Math.min(pageStart + PAGE_SIZE, filtered.length)
   const pageRows = filtered.slice(pageStart, pageEnd)
 
-  // Drop selections for rows that are no longer visible (filter narrowed,
-  // invoice deleted, etc.) so the action bar count never misleads.
-  useEffect(() => {
-    if (selectedIds.size === 0) return
+  // Derived: only rows still in the filtered view count toward the action bar,
+  // so narrowing the filter (or a delete refetch) doesn't inflate the count.
+  // Raw state still holds the user's clicks, so widening the filter restores
+  // them.
+  const selectedIds = useMemo(() => {
+    if (rawSelectedIds.size === 0) return rawSelectedIds
     const visibleIds = new Set(filtered.map((i) => i.id))
-    let changed = false
-    const next = new Set<string>()
-    for (const id of selectedIds) {
-      if (visibleIds.has(id)) next.add(id)
-      else changed = true
+    const visibleSelected = new Set<string>()
+    for (const id of rawSelectedIds) {
+      if (visibleIds.has(id)) visibleSelected.add(id)
     }
-    if (changed) setSelectedIds(next)
-  }, [filtered, selectedIds])
+    return visibleSelected.size === rawSelectedIds.size ? rawSelectedIds : visibleSelected
+  }, [filtered, rawSelectedIds])
 
   const pageSelectedCount = pageRows.reduce((n, r) => n + (selectedIds.has(r.id) ? 1 : 0), 0)
   const allPageSelected = pageRows.length > 0 && pageSelectedCount === pageRows.length
@@ -232,7 +232,7 @@ function InvoicesPage() {
       : false
 
   function toggleRow(id: string, checked: boolean) {
-    setSelectedIds((prev) => {
+    setRawSelectedIds((prev) => {
       const next = new Set(prev)
       if (checked) next.add(id)
       else next.delete(id)
@@ -241,7 +241,7 @@ function InvoicesPage() {
   }
 
   function togglePage(checked: boolean) {
-    setSelectedIds((prev) => {
+    setRawSelectedIds((prev) => {
       const next = new Set(prev)
       for (const row of pageRows) {
         if (checked) next.add(row.id)
@@ -252,7 +252,7 @@ function InvoicesPage() {
   }
 
   function clearSelection() {
-    setSelectedIds(new Set())
+    setRawSelectedIds(new Set())
   }
 
   async function handleBulkDelete() {
@@ -514,7 +514,9 @@ function InvoicesPage() {
                 </DialogTitle>
                 <DialogDescription>
                   This will remove the selected{' '}
-                  {selectedIds.size === 1 ? 'invoice and its line items' : 'invoices and their line items'}{' '}
+                  {selectedIds.size === 1
+                    ? 'invoice and its line items'
+                    : 'invoices and their line items'}{' '}
                   permanently. This cannot be undone.
                 </DialogDescription>
               </DialogHeader>

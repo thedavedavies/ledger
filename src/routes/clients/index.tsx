@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Plus, Trash2 } from 'lucide-react'
@@ -33,22 +33,21 @@ function ClientsListPage() {
   const clients = Route.useLoaderData()
   const router = useRouter()
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [rawSelectedIds, setRawSelectedIds] = useState<Set<string>>(() => new Set())
   const [showBulkDelete, setShowBulkDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  // Drop selections for rows that vanished (e.g. after a delete refetch).
-  useEffect(() => {
-    if (selectedIds.size === 0) return
+  // Derived: only count rows still present in the loader data, so selections
+  // for vanished rows (e.g. after a delete refetch) don't inflate the count.
+  const selectedIds = useMemo(() => {
+    if (rawSelectedIds.size === 0) return rawSelectedIds
     const visibleIds = new Set(clients.map((c) => c.id))
-    let changed = false
-    const next = new Set<string>()
-    for (const id of selectedIds) {
-      if (visibleIds.has(id)) next.add(id)
-      else changed = true
+    const filtered = new Set<string>()
+    for (const id of rawSelectedIds) {
+      if (visibleIds.has(id)) filtered.add(id)
     }
-    if (changed) setSelectedIds(next)
-  }, [clients, selectedIds])
+    return filtered.size === rawSelectedIds.size ? rawSelectedIds : filtered
+  }, [clients, rawSelectedIds])
 
   const selectedCount = selectedIds.size
   const allSelected = clients.length > 0 && selectedCount === clients.length
@@ -68,7 +67,7 @@ function ClientsListPage() {
   const deletableSelectedCount = selectedCount - blockedSelectedCount
 
   function toggleRow(id: string, checked: boolean) {
-    setSelectedIds((prev) => {
+    setRawSelectedIds((prev) => {
       const next = new Set(prev)
       if (checked) next.add(id)
       else next.delete(id)
@@ -77,14 +76,14 @@ function ClientsListPage() {
   }
 
   function toggleAll(checked: boolean) {
-    setSelectedIds(() => {
+    setRawSelectedIds(() => {
       if (!checked) return new Set()
       return new Set(clients.map((c) => c.id))
     })
   }
 
   function clearSelection() {
-    setSelectedIds(new Set())
+    setRawSelectedIds(new Set())
   }
 
   async function handleBulkDelete() {
