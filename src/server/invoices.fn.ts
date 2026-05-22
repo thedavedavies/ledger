@@ -216,11 +216,13 @@ export const deleteInvoices = createServerFn({ method: 'POST' })
 export const updateInvoiceStatus = createServerFn({ method: 'POST' })
   .inputValidator(invoiceStatusInput)
   .handler(async ({ data }) => {
+    const now = new Date()
     const [updated] = await db
       .update(invoice)
       .set({
         status: data.status,
-        updatedAt: new Date(),
+        updatedAt: now,
+        statusChangedAt: now,
       })
       .where(eq(invoice.id, data.id))
       .returning()

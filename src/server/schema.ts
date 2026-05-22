@@ -78,6 +78,11 @@ export const invoice = pgTable(
     notes: text().notNull().default(''),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set whenever `status` actually flips, so the activity feed can report the
+    // last transition time without confusing it with unrelated edits to other
+    // fields (which advance `updatedAt`).  Nullable so existing rows fall back
+    // to `updatedAt`/`createdAt` in the activity feed until they transition.
+    statusChangedAt: timestamp('status_changed_at', { withTimezone: true }),
   },
   (t) => [uniqueIndex('invoice_number_unique').on(t.number)],
 )

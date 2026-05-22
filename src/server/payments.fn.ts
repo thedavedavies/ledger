@@ -85,9 +85,10 @@ export const createPayment = createServerFn({ method: 'POST' })
         paidBefore + amountCents,
       )
       if (nextStatus !== inv.status) {
+        const now = new Date()
         await tx
           .update(invoice)
-          .set({ status: nextStatus, updatedAt: new Date() })
+          .set({ status: nextStatus, updatedAt: now, statusChangedAt: now })
           .where(eq(invoice.id, inv.id))
       }
 
@@ -152,9 +153,10 @@ export const deletePayment = createServerFn({ method: 'POST' })
           sumPayments(remainingPayments),
         )
         if (nextStatus !== inv.status) {
+          const now = new Date()
           await tx
             .update(invoice)
-            .set({ status: nextStatus, updatedAt: new Date() })
+            .set({ status: nextStatus, updatedAt: now, statusChangedAt: now })
             .where(eq(invoice.id, inv.id))
         }
       }
