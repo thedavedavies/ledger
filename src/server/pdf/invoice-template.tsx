@@ -112,6 +112,10 @@ const styles = StyleSheet.create({
     width: '19%',
     textAlign: 'right',
   },
+  unitPricePer: {
+    fontSize: 8,
+    color: '#888',
+  },
   colAmount: {
     width: '19%',
     textAlign: 'right',
@@ -197,6 +201,7 @@ export interface InvoiceTemplateProps {
     quantity: string
     unitPriceCents: bigint
     lineTotalCents: bigint
+    per: string
   }>
   client: {
     name: string
@@ -306,7 +311,10 @@ export function InvoiceTemplate({
             <View style={styles.tableRow} key={li.id} wrap={false}>
               <Text style={styles.colDescription}>{li.description}</Text>
               <Text style={styles.colQty}>{li.quantity}</Text>
-              <Text style={styles.colUnitPrice}>{formatMoney(li.unitPriceCents, currency)}</Text>
+              <View style={styles.colUnitPrice}>
+                <Text>{formatMoney(li.unitPriceCents, currency)}</Text>
+                {li.per ? <Text style={styles.unitPricePer}>({li.per})</Text> : null}
+              </View>
               <Text style={styles.colAmount}>{formatMoney(li.lineTotalCents, currency)}</Text>
             </View>
           ))}

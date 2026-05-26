@@ -293,6 +293,7 @@ function InvoiceViewPage() {
                     <TableCell className="text-right tabular-nums">{li.quantity}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {fmt(li.unitPriceCents)}
+                      {li.per && <div className="text-xs text-muted-foreground">({li.per})</div>}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {fmt(li.lineTotalCents)}

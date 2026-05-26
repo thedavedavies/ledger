@@ -41,7 +41,7 @@ function NewInvoicePage() {
           dueDate: plus30Days(issueDate),
           taxRate: profile.taxRate || '0',
           notes: '',
-          lineItems: [{ description: '', quantity: '1', unitPrice: '' }],
+          lineItems: [{ description: '', quantity: '1', unitPrice: '', per: '' }],
         }}
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}
         currency={currency}

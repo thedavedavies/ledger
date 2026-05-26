@@ -98,6 +98,7 @@ export const invoiceLineItem = pgTable('invoice_line_item', {
   quantity: numeric({ precision: 10, scale: 2 }).notNull(),
   unitPriceCents: bigint('unit_price_cents', { mode: 'bigint' }).notNull(),
   lineTotalCents: bigint('line_total_cents', { mode: 'bigint' }).notNull(),
+  per: text().notNull().default(''),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

@@ -125,6 +125,7 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
       quantity: li.quantity,
       unitPriceCents: li.unitPriceCents,
       lineTotalCents: li.lineTotalCents,
+      per: li.per,
     })),
     client: clientRow
       ? {

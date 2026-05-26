@@ -64,6 +64,41 @@ describe('invoiceLineInput validator', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('defaults per to "" when omitted', () => {
+    const result = invoiceLineInput.safeParse({
+      description: 'Item',
+      quantity: '1',
+      unitPrice: '100.00',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.per).toBe('')
+    }
+  })
+
+  it('accepts a per unit string', () => {
+    const result = invoiceLineInput.safeParse({
+      description: 'Hosting',
+      quantity: '1',
+      unitPrice: '100.00',
+      per: 'year',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.per).toBe('year')
+    }
+  })
+
+  it('rejects per longer than 30 characters', () => {
+    const result = invoiceLineInput.safeParse({
+      description: 'Item',
+      quantity: '1',
+      unitPrice: '100.00',
+      per: 'x'.repeat(31),
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('invoiceInput validator', () => {

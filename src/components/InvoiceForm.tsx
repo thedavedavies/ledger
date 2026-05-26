@@ -207,6 +207,7 @@ export function InvoiceForm({
                         const descId = `${lineIdBase}-${i}-description`
                         const qtyId = `${lineIdBase}-${i}-quantity`
                         const priceId = `${lineIdBase}-${i}-unit-price`
+                        const perId = `${lineIdBase}-${i}-per`
                         return (
                           <div className="grid grid-cols-[1fr_80px_120px_100px_40px] items-start gap-2 border-b px-3 py-2 last:border-b-0">
                             <form.Field name={`lineItems[${i}].description`}>
@@ -252,7 +253,7 @@ export function InvoiceForm({
                             </form.Field>
                             <form.Field name={`lineItems[${i}].unitPrice`}>
                               {(priceField) => (
-                                <div>
+                                <div className="space-y-1">
                                   <label htmlFor={priceId} className="sr-only">
                                     Unit price for line item {i + 1}
                                   </label>
@@ -275,6 +276,24 @@ export function InvoiceForm({
                                       className="h-8 pl-7 text-right text-sm"
                                     />
                                   </div>
+                                  <form.Field name={`lineItems[${i}].per`}>
+                                    {(perField) => (
+                                      <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
+                                        <label htmlFor={perId}>per</label>
+                                        <Input
+                                          id={perId}
+                                          value={perField.state.value}
+                                          onBlur={perField.handleBlur}
+                                          onChange={(e) => perField.handleChange(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') e.preventDefault()
+                                          }}
+                                          maxLength={30}
+                                          className="h-7 px-2 text-right text-xs"
+                                        />
+                                      </div>
+                                    )}
+                                  </form.Field>
                                 </div>
                               )}
                             </form.Field>
@@ -317,6 +336,7 @@ export function InvoiceForm({
                       description: '',
                       quantity: '1',
                       unitPrice: '',
+                      per: '',
                     })
                   }
                 >

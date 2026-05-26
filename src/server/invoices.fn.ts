@@ -115,6 +115,7 @@ export const createInvoice = createServerFn({ method: 'POST' })
         quantity: li.quantity,
         unitPriceCents: toCents(li.unitPrice),
         lineTotalCents: totals.lineTotals[i]!,
+        per: li.per,
         sortOrder: i,
       }))
 
@@ -179,6 +180,7 @@ export const updateInvoice = createServerFn({ method: 'POST' })
         quantity: li.quantity,
         unitPriceCents: toCents(li.unitPrice),
         lineTotalCents: totals.lineTotals[i]!,
+        per: li.per,
         sortOrder: i,
       }))
 

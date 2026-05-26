@@ -57,6 +57,7 @@ describe('schema definitions', () => {
     expect(cols).toHaveProperty('quantity')
     expect(cols).toHaveProperty('unitPriceCents')
     expect(cols).toHaveProperty('lineTotalCents')
+    expect(cols).toHaveProperty('per')
     expect(cols).toHaveProperty('sortOrder')
     expect(cols).toHaveProperty('createdAt')
     expect(cols).toHaveProperty('updatedAt')

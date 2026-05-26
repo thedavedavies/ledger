@@ -49,6 +49,7 @@ function EditInvoicePage() {
             description: li.description,
             quantity: li.quantity,
             unitPrice: fromCents(li.unitPriceCents),
+            per: li.per,
           })),
         }}
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}

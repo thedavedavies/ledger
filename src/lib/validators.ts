@@ -106,6 +106,7 @@ export const invoiceLineInput = z.object({
     .max(500, 'Description must be 500 characters or fewer'),
   quantity: moneyString('Quantity'),
   unitPrice: moneyString('Unit price', { allowZero: true }),
+  per: z.string().max(30, 'Per must be 30 characters or fewer').default(''),
 })
 
 export type InvoiceLineInput = z.infer<typeof invoiceLineInput>

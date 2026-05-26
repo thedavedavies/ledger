@@ -15,6 +15,7 @@ function makeProps(
       quantity: string
       unitPriceCents: bigint
       lineTotalCents: bigint
+      per: string
     }>
     logoSrc?: string | null
     notes?: string
@@ -29,6 +30,7 @@ function makeProps(
       quantity: '1',
       unitPriceCents: 10000n,
       lineTotalCents: 10000n,
+      per: '',
     },
   ]
 
@@ -113,6 +115,7 @@ describe('PDF rendering', () => {
       quantity: String(i + 1),
       unitPriceCents: BigInt((i + 1) * 5000),
       lineTotalCents: BigInt((i + 1) * (i + 1) * 5000),
+      per: '',
     }))
     const props = makeProps({ lineItems })
     const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
@@ -163,6 +166,33 @@ describe('PDF rendering', () => {
     expect(buffer.byteLength).toBeGreaterThan(0)
   }, 30_000)
 
+  it('renders line items with per-unit labels', async () => {
+    const { renderToBuffer } = await import('@react-pdf/renderer')
+    const lineItems = [
+      {
+        id: '1',
+        description: 'Gravity Forms license renewal',
+        quantity: '1',
+        unitPriceCents: 15900n,
+        lineTotalCents: 15900n,
+        per: 'year',
+      },
+      {
+        id: '2',
+        description: 'Update staff vacancies page',
+        quantity: '2',
+        unitPriceCents: 2500n,
+        lineTotalCents: 5000n,
+        per: 'hour',
+      },
+    ]
+    const props = makeProps({ lineItems })
+    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
+    const buffer = await renderToBuffer(element)
+    const header = Buffer.from(buffer).subarray(0, 5).toString('ascii')
+    expect(header).toBe('%PDF-')
+  }, 30_000)
+
   it('handles long descriptions without error', async () => {
     const { renderToBuffer } = await import('@react-pdf/renderer')
     const lineItems = [
@@ -173,6 +203,7 @@ describe('PDF rendering', () => {
         quantity: '1',
         unitPriceCents: 50000n,
         lineTotalCents: 50000n,
+        per: '',
       },
     ]
     const props = makeProps({ lineItems })
