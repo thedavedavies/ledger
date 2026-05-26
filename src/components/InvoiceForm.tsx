@@ -77,26 +77,36 @@ export function InvoiceForm({
   const descriptionRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map())
   const lineIdBase = useId()
   const symbol = currencySymbol(currency)
+  // Paths set as errored on the previous submit attempt, so we can clear stale
+  // messages before applying new ones (otherwise a fixed field keeps showing
+  // its old error until something else lands on the same path).
+  const errorPaths = useRef<Set<string>>(new Set())
 
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
+      for (const path of errorPaths.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TanStack's DeepKeys type doesn't accept dynamic dotted/bracketed paths.
+        form.setFieldMeta(path as any, (prev) => ({ ...prev, errorMap: {} }))
+      }
+      errorPaths.current.clear()
+
       const result = invoiceInput.safeParse(value)
       if (!result.success) {
         for (const issue of result.error.issues) {
-          const path = issue.path.map(String).join('.')
-          if (path === 'lineItems') {
-            form.setFieldMeta('lineItems' as keyof typeof value, (prev) => ({
-              ...prev,
-              errorMap: { onChange: issue.message },
-            }))
-          } else {
-            const field = issue.path[0] as string
-            form.setFieldMeta(field as keyof typeof value, (prev) => ({
-              ...prev,
-              errorMap: { onChange: issue.message },
-            }))
-          }
+          const path = issue.path
+            .map((seg, i) => {
+              if (typeof seg === 'number') return `[${seg}]`
+              const s = String(seg)
+              return i === 0 ? s : `.${s}`
+            })
+            .join('')
+          errorPaths.current.add(path)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above.
+          form.setFieldMeta(path as any, (prev) => ({
+            ...prev,
+            errorMap: { onChange: issue.message },
+          }))
         }
         return
       }
@@ -193,7 +203,7 @@ export function InvoiceForm({
                     className="grid grid-cols-[1fr_80px_120px_100px_40px] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
                   >
                     <span>Description</span>
-                    <span className="text-right">Qty</span>
+                    <span className="text-right">Quantity</span>
                     <span className="text-right">Unit price</span>
                     <span className="text-right">Amount</span>
                     <span />
@@ -211,91 +221,150 @@ export function InvoiceForm({
                         return (
                           <div className="grid grid-cols-[1fr_80px_120px_100px_40px] items-start gap-2 border-b px-3 py-2 last:border-b-0">
                             <form.Field name={`lineItems[${i}].description`}>
-                              {(descField) => (
-                                <div>
-                                  <label htmlFor={descId} className="sr-only">
-                                    Description for line item {i + 1}
-                                  </label>
-                                  <Textarea
-                                    id={descId}
-                                    ref={(el) => {
-                                      if (el) descriptionRefs.current.set(i, el)
-                                      else descriptionRefs.current.delete(i)
-                                    }}
-                                    rows={1}
-                                    value={descField.state.value}
-                                    onBlur={descField.handleBlur}
-                                    onChange={(e) => descField.handleChange(e.target.value)}
-                                    className="min-h-8 resize-y px-3 py-1 text-sm leading-6 field-sizing-content"
-                                  />
-                                </div>
-                              )}
+                              {(descField) => {
+                                const err = descField.state.meta.errorMap.onChange as
+                                  | string
+                                  | undefined
+                                const errId = err ? `${descId}-error` : undefined
+                                return (
+                                  <div>
+                                    <label htmlFor={descId} className="sr-only">
+                                      Description for line item {i + 1}
+                                    </label>
+                                    <Textarea
+                                      id={descId}
+                                      ref={(el) => {
+                                        if (el) descriptionRefs.current.set(i, el)
+                                        else descriptionRefs.current.delete(i)
+                                      }}
+                                      rows={3}
+                                      value={descField.state.value}
+                                      onBlur={descField.handleBlur}
+                                      onChange={(e) => descField.handleChange(e.target.value)}
+                                      aria-invalid={err ? true : undefined}
+                                      aria-describedby={errId}
+                                      className="min-h-8 resize-y px-3 py-1 text-sm leading-6 field-sizing-content"
+                                    />
+                                    {err && (
+                                      <p id={errId} className="mt-1 text-xs text-destructive">
+                                        Line {i + 1}: {err}
+                                      </p>
+                                    )}
+                                  </div>
+                                )
+                              }}
                             </form.Field>
                             <form.Field name={`lineItems[${i}].quantity`}>
-                              {(qtyField) => (
-                                <div>
-                                  <label htmlFor={qtyId} className="sr-only">
-                                    Quantity for line item {i + 1}
-                                  </label>
-                                  <Input
-                                    id={qtyId}
-                                    value={qtyField.state.value}
-                                    onBlur={qtyField.handleBlur}
-                                    onChange={(e) => qtyField.handleChange(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') e.preventDefault()
-                                    }}
-                                    inputMode="decimal"
-                                    className="h-8 text-right text-sm"
-                                  />
-                                </div>
-                              )}
-                            </form.Field>
-                            <form.Field name={`lineItems[${i}].unitPrice`}>
-                              {(priceField) => (
-                                <div className="space-y-1">
-                                  <label htmlFor={priceId} className="sr-only">
-                                    Unit price for line item {i + 1}
-                                  </label>
-                                  <div className="relative">
-                                    <span
-                                      aria-hidden
-                                      className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-sm text-muted-foreground"
-                                    >
-                                      {symbol}
-                                    </span>
+                              {(qtyField) => {
+                                const err = qtyField.state.meta.errorMap.onChange as
+                                  | string
+                                  | undefined
+                                const errId = err ? `${qtyId}-error` : undefined
+                                return (
+                                  <div>
+                                    <label htmlFor={qtyId} className="sr-only">
+                                      Quantity for line item {i + 1}
+                                    </label>
                                     <Input
-                                      id={priceId}
-                                      value={priceField.state.value}
-                                      onBlur={priceField.handleBlur}
-                                      onChange={(e) => priceField.handleChange(e.target.value)}
+                                      id={qtyId}
+                                      value={qtyField.state.value}
+                                      onBlur={qtyField.handleBlur}
+                                      onChange={(e) => qtyField.handleChange(e.target.value)}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') e.preventDefault()
                                       }}
                                       inputMode="decimal"
-                                      className="h-8 pl-7 text-right text-sm"
+                                      aria-invalid={err ? true : undefined}
+                                      aria-describedby={errId}
+                                      className="h-8 text-right text-sm"
                                     />
-                                  </div>
-                                  <form.Field name={`lineItems[${i}].per`}>
-                                    {(perField) => (
-                                      <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
-                                        <label htmlFor={perId}>per</label>
-                                        <Input
-                                          id={perId}
-                                          value={perField.state.value}
-                                          onBlur={perField.handleBlur}
-                                          onChange={(e) => perField.handleChange(e.target.value)}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') e.preventDefault()
-                                          }}
-                                          maxLength={30}
-                                          className="h-7 px-2 text-right text-xs"
-                                        />
-                                      </div>
+                                    {err && (
+                                      <p id={errId} className="mt-1 text-xs text-destructive">
+                                        Line {i + 1}: {err}
+                                      </p>
                                     )}
-                                  </form.Field>
-                                </div>
-                              )}
+                                  </div>
+                                )
+                              }}
+                            </form.Field>
+                            <form.Field name={`lineItems[${i}].unitPrice`}>
+                              {(priceField) => {
+                                const err = priceField.state.meta.errorMap.onChange as
+                                  | string
+                                  | undefined
+                                const errId = err ? `${priceId}-error` : undefined
+                                return (
+                                  <div className="space-y-1">
+                                    <label htmlFor={priceId} className="sr-only">
+                                      Unit price for line item {i + 1}
+                                    </label>
+                                    <div className="relative">
+                                      <span
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-sm text-muted-foreground"
+                                      >
+                                        {symbol}
+                                      </span>
+                                      <Input
+                                        id={priceId}
+                                        value={priceField.state.value}
+                                        onBlur={priceField.handleBlur}
+                                        onChange={(e) => priceField.handleChange(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') e.preventDefault()
+                                        }}
+                                        inputMode="decimal"
+                                        aria-invalid={err ? true : undefined}
+                                        aria-describedby={errId}
+                                        className="h-8 pl-7 text-right text-sm"
+                                      />
+                                    </div>
+                                    {err && (
+                                      <p id={errId} className="mt-1 text-xs text-destructive">
+                                        Line {i + 1}: {err}
+                                      </p>
+                                    )}
+                                    <form.Field name={`lineItems[${i}].per`}>
+                                      {(perField) => {
+                                        const perErr = perField.state.meta.errorMap.onChange as
+                                          | string
+                                          | undefined
+                                        const perErrId = perErr ? `${perId}-error` : undefined
+                                        return (
+                                          <div className="space-y-1 text-xs">
+                                            <div className="flex items-center justify-end gap-1.5 text-muted-foreground">
+                                              <label htmlFor={perId}>per</label>
+                                              <Input
+                                                id={perId}
+                                                value={perField.state.value}
+                                                onBlur={perField.handleBlur}
+                                                onChange={(e) =>
+                                                  perField.handleChange(e.target.value)
+                                                }
+                                                onKeyDown={(e) => {
+                                                  if (e.key === 'Enter') e.preventDefault()
+                                                }}
+                                                maxLength={30}
+                                                aria-invalid={perErr ? true : undefined}
+                                                aria-describedby={perErrId}
+                                                className="h-7 px-2 text-right text-xs"
+                                              />
+                                            </div>
+                                            {perErr && (
+                                              <p
+                                                id={perErrId}
+                                                className="text-right text-destructive"
+                                              >
+                                                Line {i + 1}: {perErr}
+                                              </p>
+                                            )}
+                                          </div>
+                                        )
+                                      }}
+                                    </form.Field>
+                                  </div>
+                                )
+                              }}
                             </form.Field>
                             <div className="text-right text-sm tabular-nums text-muted-foreground">
                               {lineTotal !== null ? lineTotal : '-'}
