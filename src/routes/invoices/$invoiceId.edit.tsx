@@ -41,6 +41,7 @@ function EditInvoicePage() {
       <InvoiceForm
         defaultValues={{
           clientId: inv.clientId,
+          title: inv.title,
           issueDate: toDateString(inv.issueDate),
           dueDate: toDateString(inv.dueDate),
           taxRate: inv.taxRate,

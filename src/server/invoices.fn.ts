@@ -97,6 +97,7 @@ export const createInvoice = createServerFn({ method: 'POST' })
         .values({
           number: invoiceNumber,
           clientId: data.clientId,
+          title: data.title,
           issueDate,
           dueDate,
           taxRate: String(taxRate),
@@ -158,6 +159,7 @@ export const updateInvoice = createServerFn({ method: 'POST' })
         .update(invoice)
         .set({
           clientId: fields.clientId,
+          title: fields.title,
           issueDate,
           dueDate,
           taxRate: String(taxRate),

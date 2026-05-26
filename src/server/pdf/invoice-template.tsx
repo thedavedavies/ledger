@@ -116,6 +116,11 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#888',
   },
+  summary: {
+    fontSize: 14,
+    color: '#1a1a1a',
+    marginBottom: 20,
+  },
   colAmount: {
     width: '19%',
     textAlign: 'right',
@@ -187,6 +192,7 @@ export interface InvoiceTemplateProps {
   invoice: {
     number: string
     status: string
+    title: string
     issueDate: string | Date
     dueDate: string | Date
     taxRate: string
@@ -272,6 +278,8 @@ export function InvoiceTemplate({
             <Text style={styles.invoiceNumber}>{inv.number}</Text>
           </View>
         </View>
+
+        {inv.title ? <Text style={styles.summary}>{inv.title}</Text> : null}
 
         {/* Billing + Meta */}
         <View style={styles.billingRow}>

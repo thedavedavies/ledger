@@ -43,6 +43,13 @@
       "when": 1779797659276,
       "tag": "0005_previous_nuke",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1779799643448,
+      "tag": "0006_silent_yellowjacket",
+      "breakpoints": true
     }
   ]
 }

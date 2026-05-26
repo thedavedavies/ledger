@@ -76,6 +76,7 @@ export const invoice = pgTable(
       .notNull()
       .default(sql`0`),
     notes: text().notNull().default(''),
+    title: text().notNull().default(''),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     // Set whenever `status` actually flips, so the activity feed can report the

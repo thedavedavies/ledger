@@ -114,6 +114,7 @@ export type InvoiceLineInput = z.infer<typeof invoiceLineInput>
 export const invoiceInput = z
   .object({
     clientId: z.string().uuid('Please select a client'),
+    title: z.string().max(200, 'Title must be 200 characters or fewer').default(''),
     issueDate: dateString('Issue date'),
     dueDate: dateString('Due date'),
     taxRate: z

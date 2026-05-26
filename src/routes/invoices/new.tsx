@@ -37,6 +37,7 @@ function NewInvoicePage() {
       <InvoiceForm
         defaultValues={{
           clientId: '',
+          title: '',
           issueDate,
           dueDate: plus30Days(issueDate),
           taxRate: profile.taxRate || '0',

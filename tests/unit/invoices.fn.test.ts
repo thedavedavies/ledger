@@ -228,4 +228,45 @@ describe('invoiceInput validator', () => {
       expect(result.data.taxRate).toBe('0')
     }
   })
+
+  it('defaults title to "" when omitted', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      issueDate: '2026-05-01',
+      dueDate: '2026-05-31',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.title).toBe('')
+    }
+  })
+
+  it('accepts a title string', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      title: 'May retainer',
+      issueDate: '2026-05-01',
+      dueDate: '2026-05-31',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.title).toBe('May retainer')
+    }
+  })
+
+  it('rejects title longer than 200 characters', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      title: 'x'.repeat(201),
+      issueDate: '2026-05-01',
+      dueDate: '2026-05-31',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(false)
+  })
 })

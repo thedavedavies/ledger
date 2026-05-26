@@ -111,6 +111,7 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
     invoice: {
       number: inv.number,
       status: inv.status,
+      title: inv.title,
       issueDate: inv.issueDate.toISOString(),
       dueDate: inv.dueDate.toISOString(),
       taxRate: inv.taxRate,

@@ -170,6 +170,9 @@ function InvoiceViewPage() {
             </span>
             {isPartiallyPaid && <span className="status-pill status-overdue">Partially paid</span>}
           </div>
+          {inv.title && (
+            <p className="mt-1 font-serif text-xl font-normal tracking-tight">{inv.title}</p>
+          )}
           <p className="mt-1 text-sm text-muted-foreground">{inv.client?.name}</p>
         </div>
         <div className="flex items-center justify-end gap-2">

@@ -21,6 +21,7 @@ function makeProps(
     notes?: string
     taxRate?: string
     currency?: string
+    title?: string
   } = {},
 ) {
   const lineItems = overrides.lineItems ?? [
@@ -44,6 +45,7 @@ function makeProps(
     invoice: {
       number: 'INV-2026-0001',
       status: 'draft',
+      title: overrides.title ?? '',
       issueDate: '2026-01-15T00:00:00.000Z',
       dueDate: '2026-02-15T00:00:00.000Z',
       taxRate,
@@ -164,6 +166,15 @@ describe('PDF rendering', () => {
     const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
     const buffer = await renderToBuffer(element)
     expect(buffer.byteLength).toBeGreaterThan(0)
+  }, 30_000)
+
+  it('renders an invoice title/summary when provided', async () => {
+    const { renderToBuffer } = await import('@react-pdf/renderer')
+    const props = makeProps({ title: 'May retainer + Gravity Forms renewal' })
+    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
+    const buffer = await renderToBuffer(element)
+    const header = Buffer.from(buffer).subarray(0, 5).toString('ascii')
+    expect(header).toBe('%PDF-')
   }, 30_000)
 
   it('renders line items with per-unit labels', async () => {

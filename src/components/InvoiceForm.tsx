@@ -125,6 +125,30 @@ export function InvoiceForm({
     >
       <div className="grid max-w-3xl gap-6">
         <section>
+          <form.Field name="title">
+            {(field) => (
+              <FormField
+                label="Title"
+                trailing="Optional"
+                error={field.state.meta.errorMap.onChange}
+              >
+                {(props) => (
+                  <Input
+                    {...props}
+                    type="text"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Type invoice summary here…"
+                    maxLength={200}
+                  />
+                )}
+              </FormField>
+            )}
+          </form.Field>
+        </section>
+
+        <section>
           <h2 className="text-lg font-medium">Bill to</h2>
           <div className="mt-4 grid gap-6">
             <form.Field name="clientId">
