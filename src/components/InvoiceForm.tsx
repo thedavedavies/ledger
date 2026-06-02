@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
@@ -15,6 +15,7 @@ import {
 import { Textarea } from '#/components/ui/textarea'
 import { invoiceInput, type InvoiceInput } from '#/lib/validators'
 import { fromCents, toCents, computeInvoiceTotals, formatMoney, currencySymbol } from '#/lib/money'
+import { addDaysToDateOnly, firstOfNextMonthDateOnly, isValidDateOnly } from '#/lib/date-only'
 
 interface Client {
   id: string
@@ -67,6 +68,44 @@ function computeLineTotal(quantity: string, unitPrice: string): string | null {
   }
 }
 
+type DueMode = 'receipt' | 'net7' | 'net14' | 'net30' | 'net60' | 'eom' | 'custom'
+
+/** Payment-term presets, ordered as shown in the dropdown. */
+const DUE_OPTIONS: { value: DueMode; label: string }[] = [
+  { value: 'receipt', label: 'Due on receipt' },
+  { value: 'net7', label: 'After 7 days' },
+  { value: 'net14', label: 'After 14 days' },
+  { value: 'net30', label: 'After 30 days' },
+  { value: 'net60', label: 'After 60 days' },
+  { value: 'eom', label: 'First of next month' },
+  { value: 'custom', label: 'Custom date' },
+]
+
+const NET_DAYS: Partial<Record<DueMode, number>> = {
+  receipt: 0,
+  net7: 7,
+  net14: 14,
+  net30: 30,
+  net60: 60,
+}
+
+/** Concrete due date a preset resolves to, or null if it can't be computed. */
+function computeDueDate(mode: DueMode, issueDate: string): string | null {
+  if (mode === 'custom' || !isValidDateOnly(issueDate)) return null
+  if (mode === 'eom') return firstOfNextMonthDateOnly(issueDate)
+  const days = NET_DAYS[mode]
+  return days === undefined ? null : addDaysToDateOnly(issueDate, days)
+}
+
+/** Which preset (if any) a stored due date matches, so editing restores it. */
+function deriveDueMode(issueDate: string, dueDate: string): DueMode {
+  if (!isValidDateOnly(issueDate) || !isValidDateOnly(dueDate)) return 'custom'
+  for (const { value } of DUE_OPTIONS) {
+    if (value !== 'custom' && computeDueDate(value, issueDate) === dueDate) return value
+  }
+  return 'custom'
+}
+
 export function InvoiceForm({
   defaultValues,
   clients,
@@ -81,6 +120,12 @@ export function InvoiceForm({
   // messages before applying new ones (otherwise a fixed field keeps showing
   // its old error until something else lands on the same path).
   const errorPaths = useRef<Set<string>>(new Set())
+  // The due date is driven by a payment-term preset; "custom" reveals a date
+  // picker.  The stored value stays a concrete date, so this is presentation
+  // only and resolves back to a preset (or "custom") when editing.
+  const [dueMode, setDueMode] = useState<DueMode>(() =>
+    deriveDueMode(defaultValues.issueDate, defaultValues.dueDate),
+  )
 
   const form = useForm({
     defaultValues,
@@ -128,7 +173,7 @@ export function InvoiceForm({
           <form.Field name="title">
             {(field) => (
               <FormField
-                label="Title"
+                label="Invoice summary"
                 trailing="Optional"
                 error={field.state.meta.errorMap.onChange}
               >
@@ -139,7 +184,6 @@ export function InvoiceForm({
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Type invoice summary here…"
                     maxLength={200}
                   />
                 )}
@@ -186,7 +230,13 @@ export function InvoiceForm({
                       type="date"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(e) => {
+                        const next = e.target.value
+                        field.handleChange(next)
+                        // Keep a preset due date anchored to the issue date.
+                        const computed = computeDueDate(dueMode, next)
+                        if (computed) form.setFieldValue('dueDate', computed)
+                      }}
                     />
                   )}
                 </FormField>
@@ -197,13 +247,41 @@ export function InvoiceForm({
               {(field) => (
                 <FormField label="Due date" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
-                    <Input
-                      {...props}
-                      type="date"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
+                    <div className="space-y-2">
+                      <Select
+                        value={dueMode}
+                        onValueChange={(value) => {
+                          const mode = value as DueMode
+                          setDueMode(mode)
+                          if (mode === 'custom') return
+                          // A preset is always valid, so drop any stale error
+                          // (e.g. a custom date that preceded the issue date).
+                          form.setFieldMeta('dueDate', (prev) => ({ ...prev, errorMap: {} }))
+                          const computed = computeDueDate(mode, form.getFieldValue('issueDate'))
+                          if (computed) form.setFieldValue('dueDate', computed)
+                        }}
+                      >
+                        <SelectTrigger {...props} className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DUE_OPTIONS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {dueMode === 'custom' && (
+                        <Input
+                          type="date"
+                          aria-label="Custom due date"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                      )}
+                    </div>
                   )}
                 </FormField>
               )}

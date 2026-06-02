@@ -38,7 +38,9 @@ async function createInvoice(page: Page) {
   await page.getByLabel('Client').click()
   await page.getByRole('option', { name: clientName }).click()
   await page.getByLabel('Issue date').fill('2026-01-15')
-  await page.getByLabel('Due date').fill('2026-02-15')
+  await page.getByLabel('Due date').click()
+  await page.getByRole('option', { name: 'Custom date' }).click()
+  await page.getByLabel('Custom due date').fill('2026-02-15')
   await page.getByLabel('Tax rate (%)').fill('0')
 
   await page.getByLabel('Description for line item 1').fill('E2E service')

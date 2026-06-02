@@ -3,6 +3,7 @@ import {
   addDaysToDateOnly,
   compareDateOnly,
   dateOnlyToUtcDate,
+  firstOfNextMonthDateOnly,
   formatDateOnly,
   isValidDateOnly,
   utcDateToDateOnly,
@@ -28,6 +29,12 @@ describe('date-only helpers', () => {
 
   it('adds days to date-only values across month boundaries', () => {
     expect(addDaysToDateOnly('2026-01-15', 30)).toBe('2026-02-14')
+  })
+
+  it('finds the first of the next month, rolling over the year in December', () => {
+    expect(firstOfNextMonthDateOnly('2026-05-09')).toBe('2026-06-01')
+    expect(firstOfNextMonthDateOnly('2026-01-31')).toBe('2026-02-01')
+    expect(firstOfNextMonthDateOnly('2026-12-15')).toBe('2027-01-01')
   })
 
   it('compares validated date-only values lexically', () => {

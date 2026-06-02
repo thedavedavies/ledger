@@ -62,6 +62,17 @@ export function addDaysToDateOnly(value: string, days: number): string {
   return localDateToDateOnly(date)
 }
 
+/** First calendar day of the month after the given date's month. */
+export function firstOfNextMonthDateOnly(value: string): string {
+  const parts = parseDateOnly(value)
+  if (!parts) throw new Error(`Invalid date-only value: ${value}`)
+
+  const rollover = parts.month === 12
+  const year = rollover ? parts.year + 1 : parts.year
+  const month = rollover ? 1 : parts.month + 1
+  return `${year}-${String(month).padStart(2, '0')}-01`
+}
+
 export function formatDateOnly(value: string | Date, locale = 'en-US'): string {
   const date = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(date.getTime())) return ''
