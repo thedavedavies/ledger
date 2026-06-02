@@ -38,6 +38,7 @@ describe('schema definitions', () => {
     expect(cols).toHaveProperty('clientId')
     expect(cols).toHaveProperty('status')
     expect(cols).toHaveProperty('title')
+    expect(cols).toHaveProperty('poNumber')
     expect(cols).toHaveProperty('issueDate')
     expect(cols).toHaveProperty('dueDate')
     expect(cols).toHaveProperty('taxRate')

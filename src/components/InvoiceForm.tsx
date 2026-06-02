@@ -286,6 +286,27 @@ export function InvoiceForm({
                 </FormField>
               )}
             </form.Field>
+
+            <form.Field name="poNumber">
+              {(field) => (
+                <FormField
+                  label="PO number"
+                  trailing="Optional"
+                  error={field.state.meta.errorMap.onChange}
+                >
+                  {(props) => (
+                    <Input
+                      {...props}
+                      type="text"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      maxLength={100}
+                    />
+                  )}
+                </FormField>
+              )}
+            </form.Field>
           </div>
         </section>
 

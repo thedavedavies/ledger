@@ -38,6 +38,7 @@ function NewInvoicePage() {
         defaultValues={{
           clientId: '',
           title: '',
+          poNumber: '',
           issueDate,
           dueDate: plus30Days(issueDate),
           taxRate: profile.taxRate || '0',

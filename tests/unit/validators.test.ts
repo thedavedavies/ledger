@@ -175,6 +175,18 @@ describe('invoiceInput', () => {
     expect(invoiceInput.safeParse({ ...validInvoice, taxRate: '101' }).success).toBe(false)
   })
 
+  it('defaults an omitted PO number to an empty string', () => {
+    const result = invoiceInput.safeParse(validInvoice)
+    expect(result.success && result.data.poNumber).toBe('')
+  })
+
+  it('accepts a PO number and rejects one over 100 characters', () => {
+    expect(invoiceInput.safeParse({ ...validInvoice, poNumber: 'PO-2026-0142' }).success).toBe(true)
+    expect(invoiceInput.safeParse({ ...validInvoice, poNumber: 'x'.repeat(101) }).success).toBe(
+      false,
+    )
+  })
+
   it('rejects a due date before the issue date', () => {
     const result = invoiceInput.safeParse({
       ...validInvoice,

@@ -50,6 +50,13 @@
       "when": 1779799643448,
       "tag": "0006_silent_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780390909709,
+      "tag": "0007_brief_black_panther",
+      "breakpoints": true
     }
   ]
 }

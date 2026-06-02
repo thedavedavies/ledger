@@ -276,6 +276,12 @@ function InvoiceViewPage() {
               <span className="text-muted-foreground">Invoice number</span>
               <p className="font-medium">{inv.number}</p>
             </div>
+            {inv.poNumber && (
+              <div>
+                <span className="text-muted-foreground">PO number</span>
+                <p className="font-medium">{inv.poNumber}</p>
+              </div>
+            )}
           </div>
 
           <div>

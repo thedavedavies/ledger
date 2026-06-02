@@ -115,6 +115,7 @@ export const invoiceInput = z
   .object({
     clientId: z.string().uuid('Please select a client'),
     title: z.string().max(200, 'Title must be 200 characters or fewer').default(''),
+    poNumber: z.string().max(100, 'PO number must be 100 characters or fewer').default(''),
     issueDate: dateString('Issue date'),
     dueDate: dateString('Due date'),
     taxRate: z
