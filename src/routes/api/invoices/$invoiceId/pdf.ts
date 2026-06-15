@@ -1,5 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { loadInvoiceData, renderInvoicePdf, TooManyRequestsError } from '#/server/pdf/render'
+import {
+  CompanyProfileMissingError,
+  loadInvoiceData,
+  renderInvoicePdf,
+  PdfRenderTimeoutError,
+  TooManyRequestsError,
+} from '#/server/pdf/render'
 
 export const Route = createFileRoute('/api/invoices/$invoiceId/pdf')({
   server: {
@@ -7,7 +13,15 @@ export const Route = createFileRoute('/api/invoices/$invoiceId/pdf')({
       GET: async ({ params }) => {
         const invoiceId = params.invoiceId as string
 
-        const data = await loadInvoiceData(invoiceId)
+        let data: Awaited<ReturnType<typeof loadInvoiceData>>
+        try {
+          data = await loadInvoiceData(invoiceId)
+        } catch (err) {
+          if (err instanceof CompanyProfileMissingError) {
+            return new Response(err.message, { status: 409 })
+          }
+          throw err
+        }
         if (!data) {
           return new Response('Invoice not found', { status: 404 })
         }
@@ -18,6 +32,9 @@ export const Route = createFileRoute('/api/invoices/$invoiceId/pdf')({
         } catch (err) {
           if (err instanceof TooManyRequestsError) {
             return new Response('Too many requests', { status: 429 })
+          }
+          if (err instanceof PdfRenderTimeoutError) {
+            return new Response('PDF render timed out', { status: 504 })
           }
           throw err
         }

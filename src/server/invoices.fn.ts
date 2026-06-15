@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
+import { dateOnlyToUtcDate } from '#/lib/date-only'
 import { invoiceInput, invoiceStatusInput } from '#/lib/validators'
 import { toCents, computeInvoiceTotals } from '#/lib/money'
 import { allocateInvoiceNumber } from './numbering'
@@ -82,7 +83,11 @@ export const createInvoice = createServerFn({ method: 'POST' })
     }))
 
     const totals = computeInvoiceTotals(lines, taxRate)
-    const issueYear = new Date(data.issueDate).getFullYear()
+    // Use UTC so a `YYYY-MM-DD` issueDate doesn't shift into the previous
+    // calendar year on negative-offset servers (e.g. 2026-01-01 in UTC-5).
+    const issueDate = dateOnlyToUtcDate(data.issueDate)
+    const dueDate = dateOnlyToUtcDate(data.dueDate)
+    const issueYear = issueDate.getUTCFullYear()
 
     const created = await db.transaction(async (tx) => {
       const invoiceNumber = await allocateInvoiceNumber(tx, issueYear, prefix)
@@ -92,8 +97,10 @@ export const createInvoice = createServerFn({ method: 'POST' })
         .values({
           number: invoiceNumber,
           clientId: data.clientId,
-          issueDate: new Date(data.issueDate),
-          dueDate: new Date(data.dueDate),
+          title: data.title,
+          poNumber: data.poNumber,
+          issueDate,
+          dueDate,
           taxRate: String(taxRate),
           subtotalCents: totals.subtotalCents,
           taxCents: totals.taxCents,
@@ -110,6 +117,7 @@ export const createInvoice = createServerFn({ method: 'POST' })
         quantity: li.quantity,
         unitPriceCents: toCents(li.unitPrice),
         lineTotalCents: totals.lineTotals[i]!,
+        per: li.per,
         sortOrder: i,
       }))
 
@@ -137,6 +145,8 @@ export const updateInvoice = createServerFn({ method: 'POST' })
     }
 
     const taxRate = fields.taxRate === '' ? 0 : Number(fields.taxRate)
+    const issueDate = dateOnlyToUtcDate(fields.issueDate)
+    const dueDate = dateOnlyToUtcDate(fields.dueDate)
 
     const lines = fields.lineItems.map((li) => ({
       quantity: li.quantity,
@@ -150,8 +160,10 @@ export const updateInvoice = createServerFn({ method: 'POST' })
         .update(invoice)
         .set({
           clientId: fields.clientId,
-          issueDate: new Date(fields.issueDate),
-          dueDate: new Date(fields.dueDate),
+          title: fields.title,
+          poNumber: fields.poNumber,
+          issueDate,
+          dueDate,
           taxRate: String(taxRate),
           subtotalCents: totals.subtotalCents,
           taxCents: totals.taxCents,
@@ -172,6 +184,7 @@ export const updateInvoice = createServerFn({ method: 'POST' })
         quantity: li.quantity,
         unitPriceCents: toCents(li.unitPrice),
         lineTotalCents: totals.lineTotals[i]!,
+        per: li.per,
         sortOrder: i,
       }))
 
@@ -195,14 +208,27 @@ export const deleteInvoice = createServerFn({ method: 'POST' })
     return { success: true as const }
   })
 
+export const deleteInvoices = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }))
+  .handler(async ({ data }) => {
+    const deleted = await db
+      .delete(invoice)
+      .where(inArray(invoice.id, data.ids))
+      .returning({ id: invoice.id })
+
+    return { success: true as const, deletedCount: deleted.length }
+  })
+
 export const updateInvoiceStatus = createServerFn({ method: 'POST' })
   .inputValidator(invoiceStatusInput)
   .handler(async ({ data }) => {
+    const now = new Date()
     const [updated] = await db
       .update(invoice)
       .set({
         status: data.status,
-        updatedAt: new Date(),
+        updatedAt: now,
+        statusChangedAt: now,
       })
       .where(eq(invoice.id, data.id))
       .returning()

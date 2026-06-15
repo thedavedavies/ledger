@@ -75,6 +75,49 @@ describe('buildInvoiceActivity', () => {
     expect(events.some((e) => e.label === 'Voided')).toBe(true)
   })
 
+  it('timestamps status-change events from statusChangedAt, not render time', () => {
+    // Regression: previously emitted `new Date()` so an invoice viewed weeks
+    // after being paid kept reading "just now".
+    const statusChangedAt = new Date('2026-05-09T10:30:00Z')
+    const events = buildInvoiceActivity(
+      { ...baseInvoice, status: 'paid', statusChangedAt },
+      [],
+      fmt,
+    )
+    const paidEvent = events.find((e) => e.label === 'Marked as paid')
+    expect(paidEvent?.at).toEqual(statusChangedAt)
+  })
+
+  it('ignores updatedAt edits after status change', () => {
+    // Regression: previously read invoice.updatedAt, which advances on any
+    // edit, so editing a paid invoice's notes shifted "Marked as paid" to the
+    // edit time.  statusChangedAt is only written when status actually flips.
+    const statusChangedAt = new Date('2026-05-09T10:30:00Z')
+    const updatedAt = new Date('2026-05-20T15:00:00Z') // a later, unrelated edit
+    const events = buildInvoiceActivity(
+      { ...baseInvoice, status: 'paid', statusChangedAt, updatedAt },
+      [],
+      fmt,
+    )
+    const paidEvent = events.find((e) => e.label === 'Marked as paid')
+    expect(paidEvent?.at).toEqual(statusChangedAt)
+  })
+
+  it('falls back to updatedAt when statusChangedAt is missing', () => {
+    // Pre-migration rows have no statusChangedAt; the feed still needs to
+    // render something sensible.
+    const updatedAt = new Date('2026-05-15T09:00:00Z')
+    const events = buildInvoiceActivity({ ...baseInvoice, status: 'paid', updatedAt }, [], fmt)
+    const paidEvent = events.find((e) => e.label === 'Marked as paid')
+    expect(paidEvent?.at).toEqual(updatedAt)
+  })
+
+  it('falls back to createdAt when both statusChangedAt and updatedAt are missing', () => {
+    const events = buildInvoiceActivity({ ...baseInvoice, status: 'void' }, [], fmt)
+    const voidEvent = events.find((e) => e.label === 'Voided')
+    expect(voidEvent?.at).toEqual(new Date(baseInvoice.createdAt))
+  })
+
   it('does not append a status event for draft or sent', () => {
     const draft = buildInvoiceActivity({ ...baseInvoice, status: 'draft' }, [], fmt)
     const sent = buildInvoiceActivity({ ...baseInvoice, status: 'sent' }, [], fmt)

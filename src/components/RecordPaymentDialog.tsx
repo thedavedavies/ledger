@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -22,6 +21,7 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Textarea } from '#/components/ui/textarea'
+import { localDateToDateOnly } from '#/lib/date-only'
 import { toCents } from '#/lib/money'
 import { PAYMENT_METHODS, paymentInput, type PaymentInput } from '#/lib/validators'
 import { createPayment } from '#/server/payments.fn'
@@ -37,13 +37,18 @@ interface Props {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10)
+  return localDateToDateOnly()
 }
 
 function defaultAmount(balanceCents: bigint) {
   if (balanceCents <= 0n) return '0.00'
   const major = Number(balanceCents) / 100
   return major.toFixed(2)
+}
+
+function paymentErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message
+  return 'Could not record payment. Please try again.'
 }
 
 export function RecordPaymentDialog({
@@ -56,7 +61,6 @@ export function RecordPaymentDialog({
   onOpenChange,
 }: Props) {
   const router = useRouter()
-  const [submitting, setSubmitting] = useState(false)
 
   const form = useForm({
     defaultValues: {
@@ -79,24 +83,34 @@ export function RecordPaymentDialog({
         }
         return
       }
-      setSubmitting(true)
       try {
         await createPayment({ data: result.data })
         toast.success('Payment recorded')
-        onOpenChange(false)
         form.reset()
         await router.invalidate()
-      } catch {
-        toast.error('Could not record payment. Please try again.')
-      } finally {
-        setSubmitting(false)
+        onOpenChange(false)
+      } catch (err) {
+        toast.error(paymentErrorMessage(err))
       }
     },
   })
 
+  const guardedOpenChange = (next: boolean) => {
+    if (form.state.isSubmitting) return
+    onOpenChange(next)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+    <Dialog open={open} onOpenChange={guardedOpenChange}>
+      <DialogContent
+        className="sm:max-w-[480px]"
+        onInteractOutside={(e) => {
+          if (form.state.isSubmitting) e.preventDefault()
+        }}
+        onEscapeKeyDown={(e) => {
+          if (form.state.isSubmitting) e.preventDefault()
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="font-serif text-[22px] font-normal tracking-tight">
             Record payment
@@ -214,22 +228,32 @@ export function RecordPaymentDialog({
           </form.Field>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
+            <form.Subscribe
+              selector={(s) => ({ isSubmitting: s.isSubmitting, amount: s.values.amount })}
             >
-              Cancel
-            </Button>
-            <form.Subscribe selector={(s) => s.values.amount}>
-              {(amount) => {
+              {({ isSubmitting, amount }) => {
                 const formatted = formatRecordAmount(amount, formatCents)
                 return (
-                  <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="size-4 animate-spin" />}
-                    Record{formatted ? ` ${formatted}` : ''}
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => onOpenChange(false)}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      aria-busy={isSubmitting || undefined}
+                    >
+                      {isSubmitting && (
+                        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                      )}
+                      {isSubmitting ? 'Recording…' : `Record${formatted ? ` ${formatted}` : ''}`}
+                    </Button>
+                  </>
                 )
               }}
             </form.Subscribe>

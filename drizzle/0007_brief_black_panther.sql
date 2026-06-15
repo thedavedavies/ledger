@@ -1,0 +1,1 @@
+ALTER TABLE "invoice" ADD COLUMN "po_number" text DEFAULT '' NOT NULL;

@@ -15,11 +15,14 @@ function makeProps(
       quantity: string
       unitPriceCents: bigint
       lineTotalCents: bigint
+      per: string
     }>
     logoSrc?: string | null
     notes?: string
     taxRate?: string
     currency?: string
+    title?: string
+    poNumber?: string
   } = {},
 ) {
   const lineItems = overrides.lineItems ?? [
@@ -29,6 +32,7 @@ function makeProps(
       quantity: '1',
       unitPriceCents: 10000n,
       lineTotalCents: 10000n,
+      per: '',
     },
   ]
 
@@ -42,6 +46,8 @@ function makeProps(
     invoice: {
       number: 'INV-2026-0001',
       status: 'draft',
+      title: overrides.title ?? '',
+      poNumber: overrides.poNumber ?? '',
       issueDate: '2026-01-15T00:00:00.000Z',
       dueDate: '2026-02-15T00:00:00.000Z',
       taxRate,
@@ -113,6 +119,7 @@ describe('PDF rendering', () => {
       quantity: String(i + 1),
       unitPriceCents: BigInt((i + 1) * 5000),
       lineTotalCents: BigInt((i + 1) * (i + 1) * 5000),
+      per: '',
     }))
     const props = makeProps({ lineItems })
     const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
@@ -163,6 +170,51 @@ describe('PDF rendering', () => {
     expect(buffer.byteLength).toBeGreaterThan(0)
   }, 30_000)
 
+  it('renders an invoice title/summary when provided', async () => {
+    const { renderToBuffer } = await import('@react-pdf/renderer')
+    const props = makeProps({ title: 'May retainer + Gravity Forms renewal' })
+    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
+    const buffer = await renderToBuffer(element)
+    const header = Buffer.from(buffer).subarray(0, 5).toString('ascii')
+    expect(header).toBe('%PDF-')
+  }, 30_000)
+
+  it('renders a PO number when provided', async () => {
+    const { renderToBuffer } = await import('@react-pdf/renderer')
+    const props = makeProps({ poNumber: 'PO-2026-0142' })
+    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
+    const buffer = await renderToBuffer(element)
+    const header = Buffer.from(buffer).subarray(0, 5).toString('ascii')
+    expect(header).toBe('%PDF-')
+  }, 30_000)
+
+  it('renders line items with per-unit labels', async () => {
+    const { renderToBuffer } = await import('@react-pdf/renderer')
+    const lineItems = [
+      {
+        id: '1',
+        description: 'Gravity Forms license renewal',
+        quantity: '1',
+        unitPriceCents: 15900n,
+        lineTotalCents: 15900n,
+        per: 'year',
+      },
+      {
+        id: '2',
+        description: 'Update staff vacancies page',
+        quantity: '2',
+        unitPriceCents: 2500n,
+        lineTotalCents: 5000n,
+        per: 'hour',
+      },
+    ]
+    const props = makeProps({ lineItems })
+    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
+    const buffer = await renderToBuffer(element)
+    const header = Buffer.from(buffer).subarray(0, 5).toString('ascii')
+    expect(header).toBe('%PDF-')
+  }, 30_000)
+
   it('handles long descriptions without error', async () => {
     const { renderToBuffer } = await import('@react-pdf/renderer')
     const lineItems = [
@@ -173,6 +225,7 @@ describe('PDF rendering', () => {
         quantity: '1',
         unitPriceCents: 50000n,
         lineTotalCents: 50000n,
+        per: '',
       },
     ]
     const props = makeProps({ lineItems })

@@ -134,6 +134,23 @@ describe('invoiceLineInput', () => {
   it('rejects a negative unit price', () => {
     expect(invoiceLineInput.safeParse({ ...validLine, unitPrice: '-1' }).success).toBe(false)
   })
+
+  it('rejects sub-cent precision on unit price', () => {
+    // '0.001' would silently round to 0 cents in toCents and produce a $0 invoice.
+    expect(invoiceLineInput.safeParse({ ...validLine, unitPrice: '0.001' }).success).toBe(false)
+    expect(invoiceLineInput.safeParse({ ...validLine, unitPrice: '12.345' }).success).toBe(false)
+  })
+
+  it('rejects sub-cent precision on quantity', () => {
+    expect(invoiceLineInput.safeParse({ ...validLine, quantity: '1.005' }).success).toBe(false)
+  })
+
+  it('rejects Infinity, NaN, and scientific notation on numeric fields', () => {
+    expect(invoiceLineInput.safeParse({ ...validLine, unitPrice: 'Infinity' }).success).toBe(false)
+    expect(invoiceLineInput.safeParse({ ...validLine, unitPrice: 'NaN' }).success).toBe(false)
+    expect(invoiceLineInput.safeParse({ ...validLine, unitPrice: '1e3' }).success).toBe(false)
+    expect(invoiceLineInput.safeParse({ ...validLine, quantity: 'Infinity' }).success).toBe(false)
+  })
 })
 
 describe('invoiceInput', () => {
@@ -156,6 +173,47 @@ describe('invoiceInput', () => {
 
   it('rejects a tax rate outside 0–100', () => {
     expect(invoiceInput.safeParse({ ...validInvoice, taxRate: '101' }).success).toBe(false)
+  })
+
+  it('defaults an omitted PO number to an empty string', () => {
+    const result = invoiceInput.safeParse(validInvoice)
+    expect(result.success && result.data.poNumber).toBe('')
+  })
+
+  it('accepts a PO number and rejects one over 100 characters', () => {
+    expect(invoiceInput.safeParse({ ...validInvoice, poNumber: 'PO-2026-0142' }).success).toBe(true)
+    expect(invoiceInput.safeParse({ ...validInvoice, poNumber: 'x'.repeat(101) }).success).toBe(
+      false,
+    )
+  })
+
+  it('rejects a due date before the issue date', () => {
+    const result = invoiceInput.safeParse({
+      ...validInvoice,
+      issueDate: '2026-05-09',
+      dueDate: '2026-05-08',
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path.join('.') === 'dueDate')).toBe(true)
+    }
+  })
+
+  it('rejects malformed dates', () => {
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026-13-01' }).success).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: 'today' }).success).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026/05/09' }).success).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, dueDate: '' }).success).toBe(false)
+  })
+
+  it('rejects calendar-invalid dates that would silently roll over', () => {
+    // new Date('2026-02-31') yields March 3; the refinement must catch this.
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026-02-31' }).success).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2026-04-31' }).success).toBe(false)
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2025-02-29' }).success).toBe(false)
+    // Leap day in an actual leap year should still pass.
+    expect(invoiceInput.safeParse({ ...validInvoice, issueDate: '2024-02-29' }).success).toBe(true)
   })
 })
 
@@ -196,8 +254,15 @@ describe('paymentInput', () => {
     expect(paymentInput.safeParse({ ...validPayment, amount: '-5' }).success).toBe(false)
   })
 
-  it('requires paidAt', () => {
+  it('rejects sub-cent and non-finite amounts', () => {
+    expect(paymentInput.safeParse({ ...validPayment, amount: '0.001' }).success).toBe(false)
+    expect(paymentInput.safeParse({ ...validPayment, amount: 'Infinity' }).success).toBe(false)
+    expect(paymentInput.safeParse({ ...validPayment, amount: '1e2' }).success).toBe(false)
+  })
+
+  it('requires a valid paidAt date', () => {
     expect(paymentInput.safeParse({ ...validPayment, paidAt: '' }).success).toBe(false)
+    expect(paymentInput.safeParse({ ...validPayment, paidAt: '2026-13-01' }).success).toBe(false)
   })
 
   it('rejects a non-UUID invoiceId', () => {

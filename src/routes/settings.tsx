@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -17,12 +17,14 @@ import { companyProfileInput } from '#/lib/validators'
 import { CURRENCIES } from '#/lib/currency'
 
 export const Route = createFileRoute('/settings')({
+  head: () => ({ meta: [{ title: 'Settings · Ledger' }] }),
   loader: () => getCompanyProfile(),
   component: SettingsPage,
 })
 
 function SettingsPage() {
   const profile = Route.useLoaderData()
+  const router = useRouter()
 
   const form = useForm({
     defaultValues: {
@@ -52,6 +54,9 @@ function SettingsPage() {
       }
       try {
         await updateCompanyProfile({ data: result.data })
+        // Refresh the root loader so the sidebar picks up the new
+        // businessName/email immediately, plus this page's own loader.
+        await router.invalidate()
         toast.success('Saved')
       } catch {
         toast.error('Something went wrong. Please try again.')
@@ -283,9 +288,9 @@ function SettingsPage() {
         <div className="flex items-center gap-3 border-t pt-6">
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-                Save changes
+              <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
+                {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                {isSubmitting ? 'Saving…' : 'Save changes'}
               </Button>
             )}
           </form.Subscribe>

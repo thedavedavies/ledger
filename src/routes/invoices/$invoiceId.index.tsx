@@ -27,12 +27,14 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
 import { RecordPaymentDialog } from '#/components/RecordPaymentDialog'
+import { formatDateOnly } from '#/lib/date-only'
 import { buildInvoiceActivity } from '#/lib/invoice-activity'
 import { formatMoney } from '#/lib/money'
 import { timeAgo } from '#/lib/time-ago'
@@ -42,6 +44,7 @@ import { listPayments, deletePayment } from '#/server/payments.fn'
 import type { InvoiceStatus } from '#/server/schema'
 
 export const Route = createFileRoute('/invoices/$invoiceId/')({
+  head: () => ({ meta: [{ title: 'Invoice · Ledger' }] }),
   loader: async ({ params }) => {
     const [inv, profile, payments] = await Promise.all([
       getInvoice({ data: { id: params.invoiceId } }),
@@ -64,11 +67,7 @@ const STATUS_STYLES: Record<InvoiceStatus, string> = {
 const STATUSES: InvoiceStatus[] = ['draft', 'sent', 'paid', 'void']
 
 function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDateOnly(date)
 }
 
 function InvoiceViewPage() {
@@ -97,7 +96,7 @@ function InvoiceViewPage() {
     try {
       await deleteInvoice({ data: { id: inv.id } })
       toast.success('Invoice deleted')
-      await navigate({ to: '/' })
+      await navigate({ to: '/invoices' })
     } catch {
       toast.error('Something went wrong. Please try again.')
     } finally {
@@ -171,36 +170,39 @@ function InvoiceViewPage() {
             </span>
             {isPartiallyPaid && <span className="status-pill status-overdue">Partially paid</span>}
           </div>
+          {inv.title && (
+            <p className="mt-1 font-serif text-xl font-normal tracking-tight">{inv.title}</p>
+          )}
           <p className="mt-1 text-sm text-muted-foreground">{inv.client?.name}</p>
         </div>
         <div className="flex items-center justify-end gap-2">
           {inv.status === 'draft' && (
-            <Button onClick={handleSend} disabled={sending}>
-              <Send className="size-4" />
+            <Button onClick={handleSend} disabled={sending} aria-busy={sending || undefined}>
+              <Send className="size-4" aria-hidden="true" />
               {sending ? 'Sending…' : 'Send'}
             </Button>
           )}
           {(inv.status === 'sent' || inv.status === 'paid') && balanceDueCents > 0n && (
             <Button onClick={() => setShowRecordPayment(true)}>
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
               Record payment
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" aria-label="More actions">
-                <MoreHorizontal className="size-4" />
+                <MoreHorizontal className="size-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>
                 <Link to="/invoices/$invoiceId/edit" params={{ invoiceId: inv.id }}>
-                  <Pencil className="size-4" />
+                  <Pencil className="size-4" aria-hidden="true" />
                   Edit
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={downloadPdf}>
-                <Download className="size-4" />
+                <Download className="size-4" aria-hidden="true" />
                 Download PDF
               </DropdownMenuItem>
               <DropdownMenuSub>
@@ -217,7 +219,7 @@ function InvoiceViewPage() {
               </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => setShowDelete(true)}>
-                <X className="size-4" />
+                <X className="size-4" aria-hidden="true" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -228,6 +230,7 @@ function InvoiceViewPage() {
       <div className="mt-8 grid grid-cols-[1fr_260px] gap-8 print:block">
         {/* Doc column */}
         <div className="space-y-8">
+          <h2 className="sr-only">Invoice details</h2>
           <div className="grid grid-cols-2 gap-8">
             <div>
               <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
@@ -273,10 +276,17 @@ function InvoiceViewPage() {
               <span className="text-muted-foreground">Invoice number</span>
               <p className="font-medium">{inv.number}</p>
             </div>
+            {inv.poNumber && (
+              <div>
+                <span className="text-muted-foreground">PO number</span>
+                <p className="font-medium">{inv.poNumber}</p>
+              </div>
+            )}
           </div>
 
           <div>
             <Table>
+              <TableCaption className="sr-only">Line items</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Description</TableHead>
@@ -287,11 +297,12 @@ function InvoiceViewPage() {
               </TableHeader>
               <TableBody>
                 {inv.lineItems.map((li) => (
-                  <TableRow key={li.id}>
-                    <TableCell>{li.description}</TableCell>
+                  <TableRow key={li.id} className="[&>td]:align-top">
+                    <TableCell className="whitespace-pre-line">{li.description}</TableCell>
                     <TableCell className="text-right tabular-nums">{li.quantity}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {fmt(li.unitPriceCents)}
+                      {li.per && <div className="text-xs text-muted-foreground">({li.per})</div>}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {fmt(li.lineTotalCents)}
@@ -370,7 +381,7 @@ function InvoiceViewPage() {
                   className="text-[var(--color-accent)]"
                   onClick={() => setShowRecordPayment(true)}
                 >
-                  <Plus className="size-3.5" />
+                  <Plus className="size-3.5" aria-hidden="true" />
                   Record payment
                 </Button>
               )}
@@ -403,11 +414,11 @@ function InvoiceViewPage() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      label="Remove payment"
+                      label={`Remove payment of ${fmt(p.amountCents)} on ${formatDate(p.paidAt)}`}
                       onClick={() => setDeletePaymentId(p.id)}
-                      className="ml-auto h-8 w-8 cursor-pointer p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      className="ml-auto h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
-                      <X className="size-4" />
+                      <X className="size-4" aria-hidden="true" />
                     </IconButton>
                   </div>
                 ))}
@@ -432,10 +443,13 @@ function InvoiceViewPage() {
         </div>
 
         {/* Activity sidebar */}
-        <aside aria-label="Activity" className="space-y-3 print:hidden">
-          <h3 className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground">
+        <aside aria-labelledby="activity-heading" className="space-y-3 print:hidden">
+          <h2
+            id="activity-heading"
+            className="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground"
+          >
             Activity
-          </h3>
+          </h2>
           <div className="border-t border-border pt-4">
             <ul className="relative space-y-4 pl-4">
               <span aria-hidden className="absolute top-2 bottom-2 left-[3px] w-px bg-border" />

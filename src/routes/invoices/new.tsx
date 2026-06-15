@@ -1,11 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { InvoiceForm } from '#/components/InvoiceForm'
+import { addDaysToDateOnly, localDateToDateOnly } from '#/lib/date-only'
 import { listClients } from '#/server/clients.fn'
 import { getCompanyProfile } from '#/server/settings.fn'
 import { createInvoice } from '#/server/invoices.fn'
 
 export const Route = createFileRoute('/invoices/new')({
+  head: () => ({ meta: [{ title: 'New invoice · Ledger' }] }),
   loader: async () => {
     const [clients, profile] = await Promise.all([listClients(), getCompanyProfile()])
     return { clients, profile }
@@ -14,19 +16,18 @@ export const Route = createFileRoute('/invoices/new')({
 })
 
 function todayString() {
-  return new Date().toISOString().split('T')[0]!
+  return localDateToDateOnly()
 }
 
-function plus30Days() {
-  const d = new Date()
-  d.setDate(d.getDate() + 30)
-  return d.toISOString().split('T')[0]!
+function plus30Days(issueDate: string) {
+  return addDaysToDateOnly(issueDate, 30)
 }
 
 function NewInvoicePage() {
   const { clients, profile } = Route.useLoaderData()
   const navigate = useNavigate()
   const currency = profile.defaultCurrency || 'USD'
+  const issueDate = todayString()
 
   return (
     <div>
@@ -36,11 +37,13 @@ function NewInvoicePage() {
       <InvoiceForm
         defaultValues={{
           clientId: '',
-          issueDate: todayString(),
-          dueDate: plus30Days(),
+          title: '',
+          poNumber: '',
+          issueDate,
+          dueDate: plus30Days(issueDate),
           taxRate: profile.taxRate || '0',
           notes: '',
-          lineItems: [{ description: '', quantity: '1', unitPrice: '' }],
+          lineItems: [{ description: '', quantity: '1', unitPrice: '', per: '' }],
         }}
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}
         currency={currency}

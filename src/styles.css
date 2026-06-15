@@ -97,6 +97,50 @@ body {
     font-family: var(--font-serif);
     letter-spacing: -0.01em;
   }
+
+  /* Tailwind v4 dropped the default `cursor: pointer` on buttons. Restore it
+     here so every native button and ARIA button gets the pointer cursor by
+     default, with Tailwind utilities still free to override (e.g. disabled or
+     aria-disabled states). */
+  button:not(:disabled):not([aria-disabled='true']),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+/* Skip-to-content link. Hidden off-screen until focused, then visible in the
+   top-left corner. Tailwind v4's `focus:not-sr-only` leaves `clip-path: inset(50%)`
+   in place, so we write this explicitly. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--color-foreground);
+  color: var(--color-background);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* Respect reduced-motion preference. Strips Radix open/close animations,
+   Loader2 spin, and any future transitions for users who request it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 @layer utilities {

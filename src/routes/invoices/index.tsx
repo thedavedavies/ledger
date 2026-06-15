@@ -1,7 +1,17 @@
 import { useMemo, useState } from 'react'
-import { Link, createFileRoute } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react'
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
+import { ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
 import {
   Select,
@@ -13,15 +23,17 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { dateOnlyToUtcDate, formatDateOnly, localDateToDateOnly } from '#/lib/date-only'
 import { formatMoney } from '#/lib/money'
 import { getCompanyProfile } from '#/server/settings.fn'
 import { listClients } from '#/server/clients.fn'
-import { listInvoices } from '#/server/invoices.fn'
+import { deleteInvoices, listInvoices } from '#/server/invoices.fn'
 import type { InvoiceStatus } from '#/server/schema'
 
 type StatusFilter = InvoiceStatus | 'all' | 'overdue'
@@ -30,6 +42,7 @@ type DatePreset = 'all' | 'this-month' | 'last-month' | 'this-quarter' | 'this-y
 const PAGE_SIZE = 25
 
 export const Route = createFileRoute('/invoices/')({
+  head: () => ({ meta: [{ title: 'Invoices · Ledger' }] }),
   loader: async () => {
     const [invoices, clients, profile] = await Promise.all([
       listInvoices(),
@@ -59,37 +72,34 @@ function StatusBadge({ status, overdue }: { status: InvoiceStatus; overdue?: boo
 }
 
 function startOfToday(): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
+  return dateOnlyToUtcDate(localDateToDateOnly())
 }
 
 function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDateOnly(date)
 }
 
 // End is exclusive (start of next period). Returns null for 'all'.
 function dateRangeFor(preset: DatePreset, today: Date): { start: Date; end: Date } | null {
   if (preset === 'all') return null
-  const y = today.getFullYear()
-  const m = today.getMonth()
+  const y = today.getUTCFullYear()
+  const m = today.getUTCMonth()
   switch (preset) {
     case 'this-month':
-      return { start: new Date(y, m, 1), end: new Date(y, m + 1, 1) }
+      return { start: new Date(Date.UTC(y, m, 1)), end: new Date(Date.UTC(y, m + 1, 1)) }
     case 'last-month':
-      return { start: new Date(y, m - 1, 1), end: new Date(y, m, 1) }
+      return { start: new Date(Date.UTC(y, m - 1, 1)), end: new Date(Date.UTC(y, m, 1)) }
     case 'this-quarter': {
       const qStart = Math.floor(m / 3) * 3
-      return { start: new Date(y, qStart, 1), end: new Date(y, qStart + 3, 1) }
+      return {
+        start: new Date(Date.UTC(y, qStart, 1)),
+        end: new Date(Date.UTC(y, qStart + 3, 1)),
+      }
     }
     case 'this-year':
-      return { start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1) }
+      return { start: new Date(Date.UTC(y, 0, 1)), end: new Date(Date.UTC(y + 1, 0, 1)) }
     case 'last-year':
-      return { start: new Date(y - 1, 0, 1), end: new Date(y, 0, 1) }
+      return { start: new Date(Date.UTC(y - 1, 0, 1)), end: new Date(Date.UTC(y, 0, 1)) }
   }
 }
 
@@ -108,6 +118,7 @@ function pageItems(current: number, total: number): (number | 'gap')[] {
 
 function InvoicesPage() {
   const { invoices, clients, profile } = Route.useLoaderData()
+  const router = useRouter()
   const needsSetup = !profile.businessName
   const currency = profile.defaultCurrency || 'USD'
 
@@ -116,6 +127,9 @@ function InvoicesPage() {
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<DatePreset>('all')
   const [page, setPage] = useState(1)
+  const [rawSelectedIds, setRawSelectedIds] = useState<Set<string>>(() => new Set())
+  const [showBulkDelete, setShowBulkDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const today = useMemo(() => startOfToday(), [])
 
@@ -194,6 +208,70 @@ function InvoicesPage() {
   const pageEnd = Math.min(pageStart + PAGE_SIZE, filtered.length)
   const pageRows = filtered.slice(pageStart, pageEnd)
 
+  // Derived: only rows still in the filtered view count toward the action bar,
+  // so narrowing the filter (or a delete refetch) doesn't inflate the count.
+  // Raw state still holds the user's clicks, so widening the filter restores
+  // them.
+  const selectedIds = useMemo(() => {
+    if (rawSelectedIds.size === 0) return rawSelectedIds
+    const visibleIds = new Set(filtered.map((i) => i.id))
+    const visibleSelected = new Set<string>()
+    for (const id of rawSelectedIds) {
+      if (visibleIds.has(id)) visibleSelected.add(id)
+    }
+    return visibleSelected.size === rawSelectedIds.size ? rawSelectedIds : visibleSelected
+  }, [filtered, rawSelectedIds])
+
+  const pageSelectedCount = pageRows.reduce((n, r) => n + (selectedIds.has(r.id) ? 1 : 0), 0)
+  const allPageSelected = pageRows.length > 0 && pageSelectedCount === pageRows.length
+  const somePageSelected = pageSelectedCount > 0 && !allPageSelected
+  const headerCheckedState: boolean | 'indeterminate' = allPageSelected
+    ? true
+    : somePageSelected
+      ? 'indeterminate'
+      : false
+
+  function toggleRow(id: string, checked: boolean) {
+    setRawSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  function togglePage(checked: boolean) {
+    setRawSelectedIds((prev) => {
+      const next = new Set(prev)
+      for (const row of pageRows) {
+        if (checked) next.add(row.id)
+        else next.delete(row.id)
+      }
+      return next
+    })
+  }
+
+  function clearSelection() {
+    setRawSelectedIds(new Set())
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setDeleting(true)
+    try {
+      await deleteInvoices({ data: { ids } })
+      toast.success(ids.length === 1 ? 'Invoice deleted' : `${ids.length} invoices deleted`)
+      setShowBulkDelete(false)
+      clearSelection()
+      await router.invalidate()
+    } catch {
+      toast.error('Something went wrong. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div>
       {needsSetup && (
@@ -210,7 +288,7 @@ function InvoicesPage() {
         {invoices.length > 0 && (
           <Button asChild>
             <Link to="/invoices/new">
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
               New invoice
             </Link>
           </Button>
@@ -222,7 +300,7 @@ function InvoicesPage() {
           <p className="text-muted-foreground">No invoices yet</p>
           <Button asChild className="mt-4">
             <Link to="/invoices/new">
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
               New invoice
             </Link>
           </Button>
@@ -289,7 +367,7 @@ function InvoicesPage() {
             </Select>
             {filtersActive && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="size-4" />
+                <X className="size-4" aria-hidden="true" />
                 Clear
               </Button>
             )}
@@ -304,10 +382,50 @@ function InvoicesPage() {
             </div>
           ) : (
             <>
+              {selectedIds.size > 0 && (
+                <div
+                  role="region"
+                  aria-label="Bulk actions"
+                  className="mt-4 flex items-center justify-between rounded-md border border-border bg-muted/50 px-3 py-2"
+                >
+                  <p className="text-sm">
+                    <span className="font-medium">{selectedIds.size}</span>
+                    <span className="text-muted-foreground">
+                      {selectedIds.size === 1 ? ' invoice selected' : ' invoices selected'}
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={clearSelection}>
+                      Clear
+                    </Button>
+                    <Button
+                      variant="destructiveOutline"
+                      size="sm"
+                      onClick={() => setShowBulkDelete(true)}
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4">
                 <Table>
+                  <TableCaption className="sr-only">Invoices</TableCaption>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[36px]">
+                        <Checkbox
+                          checked={headerCheckedState}
+                          onCheckedChange={(c) => togglePage(c === true)}
+                          aria-label={
+                            allPageSelected
+                              ? 'Deselect all invoices on this page'
+                              : 'Select all invoices on this page'
+                          }
+                        />
+                      </TableHead>
                       <TableHead>Number</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Issued</TableHead>
@@ -322,11 +440,20 @@ function InvoicesPage() {
                   <TableBody>
                     {pageRows.map((inv) => {
                       const isOverdue = inv.status === 'sent' && new Date(inv.dueDate) < today
+                      const isSelected = selectedIds.has(inv.id)
                       return (
                         <TableRow
                           key={inv.id}
+                          data-state={isSelected ? 'selected' : undefined}
                           className={inv.status === 'void' ? 'line-through opacity-60' : ''}
                         >
+                          <TableCell>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(c) => toggleRow(inv.id, c === true)}
+                              aria-label={`Select invoice ${inv.number}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">
                             <Link
                               to="/invoices/$invoiceId"
@@ -373,6 +500,40 @@ function InvoicesPage() {
               />
             </>
           )}
+
+          <Dialog
+            open={showBulkDelete}
+            onOpenChange={(open) => !open && !deleting && setShowBulkDelete(false)}
+          >
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedIds.size === 1
+                    ? 'Delete this invoice?'
+                    : `Delete ${selectedIds.size} invoices?`}
+                </DialogTitle>
+                <DialogDescription>
+                  This will remove the selected{' '}
+                  {selectedIds.size === 1
+                    ? 'invoice and its line items'
+                    : 'invoices and their line items'}{' '}
+                  permanently. This cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBulkDelete(false)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleBulkDelete} disabled={deleting}>
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>
@@ -413,7 +574,7 @@ function Pagination({
             disabled={page <= 1}
             aria-label="Previous page"
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-4" aria-hidden="true" />
             Previous
           </Button>
           {items.map((it, idx) =>
@@ -447,7 +608,7 @@ function Pagination({
             aria-label="Next page"
           >
             Next
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4" aria-hidden="true" />
           </Button>
         </div>
       )}

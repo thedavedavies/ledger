@@ -1,0 +1,1 @@
+ALTER TABLE "invoice" ADD COLUMN "title" text DEFAULT '' NOT NULL;

@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
@@ -12,8 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { Textarea } from '#/components/ui/textarea'
 import { invoiceInput, type InvoiceInput } from '#/lib/validators'
 import { fromCents, toCents, computeInvoiceTotals, formatMoney, currencySymbol } from '#/lib/money'
+import { addDaysToDateOnly, firstOfNextMonthDateOnly, isValidDateOnly } from '#/lib/date-only'
 
 interface Client {
   id: string
@@ -66,6 +68,44 @@ function computeLineTotal(quantity: string, unitPrice: string): string | null {
   }
 }
 
+type DueMode = 'receipt' | 'net7' | 'net14' | 'net30' | 'net60' | 'eom' | 'custom'
+
+/** Payment-term presets, ordered as shown in the dropdown. */
+const DUE_OPTIONS: { value: DueMode; label: string }[] = [
+  { value: 'receipt', label: 'Due on receipt' },
+  { value: 'net7', label: 'After 7 days' },
+  { value: 'net14', label: 'After 14 days' },
+  { value: 'net30', label: 'After 30 days' },
+  { value: 'net60', label: 'After 60 days' },
+  { value: 'eom', label: 'First of next month' },
+  { value: 'custom', label: 'Custom date' },
+]
+
+const NET_DAYS: Partial<Record<DueMode, number>> = {
+  receipt: 0,
+  net7: 7,
+  net14: 14,
+  net30: 30,
+  net60: 60,
+}
+
+/** Concrete due date a preset resolves to, or null if it can't be computed. */
+function computeDueDate(mode: DueMode, issueDate: string): string | null {
+  if (mode === 'custom' || !isValidDateOnly(issueDate)) return null
+  if (mode === 'eom') return firstOfNextMonthDateOnly(issueDate)
+  const days = NET_DAYS[mode]
+  return days === undefined ? null : addDaysToDateOnly(issueDate, days)
+}
+
+/** Which preset (if any) a stored due date matches, so editing restores it. */
+function deriveDueMode(issueDate: string, dueDate: string): DueMode {
+  if (!isValidDateOnly(issueDate) || !isValidDateOnly(dueDate)) return 'custom'
+  for (const { value } of DUE_OPTIONS) {
+    if (value !== 'custom' && computeDueDate(value, issueDate) === dueDate) return value
+  }
+  return 'custom'
+}
+
 export function InvoiceForm({
   defaultValues,
   clients,
@@ -73,29 +113,45 @@ export function InvoiceForm({
   onSubmit,
   submitLabel,
 }: InvoiceFormProps) {
-  const descriptionRefs = useRef<Map<number, HTMLInputElement>>(new Map())
+  const descriptionRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map())
   const lineIdBase = useId()
   const symbol = currencySymbol(currency)
+  // Paths set as errored on the previous submit attempt, so we can clear stale
+  // messages before applying new ones (otherwise a fixed field keeps showing
+  // its old error until something else lands on the same path).
+  const errorPaths = useRef<Set<string>>(new Set())
+  // The due date is driven by a payment-term preset; "custom" reveals a date
+  // picker.  The stored value stays a concrete date, so this is presentation
+  // only and resolves back to a preset (or "custom") when editing.
+  const [dueMode, setDueMode] = useState<DueMode>(() =>
+    deriveDueMode(defaultValues.issueDate, defaultValues.dueDate),
+  )
 
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
+      for (const path of errorPaths.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TanStack's DeepKeys type doesn't accept dynamic dotted/bracketed paths.
+        form.setFieldMeta(path as any, (prev) => ({ ...prev, errorMap: {} }))
+      }
+      errorPaths.current.clear()
+
       const result = invoiceInput.safeParse(value)
       if (!result.success) {
         for (const issue of result.error.issues) {
-          const path = issue.path.map(String).join('.')
-          if (path === 'lineItems') {
-            form.setFieldMeta('lineItems' as keyof typeof value, (prev) => ({
-              ...prev,
-              errorMap: { onChange: issue.message },
-            }))
-          } else {
-            const field = issue.path[0] as string
-            form.setFieldMeta(field as keyof typeof value, (prev) => ({
-              ...prev,
-              errorMap: { onChange: issue.message },
-            }))
-          }
+          const path = issue.path
+            .map((seg, i) => {
+              if (typeof seg === 'number') return `[${seg}]`
+              const s = String(seg)
+              return i === 0 ? s : `.${s}`
+            })
+            .join('')
+          errorPaths.current.add(path)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above.
+          form.setFieldMeta(path as any, (prev) => ({
+            ...prev,
+            errorMap: { onChange: issue.message },
+          }))
         }
         return
       }
@@ -113,6 +169,29 @@ export function InvoiceForm({
       }}
     >
       <div className="grid max-w-3xl gap-6">
+        <section>
+          <form.Field name="title">
+            {(field) => (
+              <FormField
+                label="Invoice summary"
+                trailing="Optional"
+                error={field.state.meta.errorMap.onChange}
+              >
+                {(props) => (
+                  <Input
+                    {...props}
+                    type="text"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    maxLength={200}
+                  />
+                )}
+              </FormField>
+            )}
+          </form.Field>
+        </section>
+
         <section>
           <h2 className="text-lg font-medium">Bill to</h2>
           <div className="mt-4 grid gap-6">
@@ -151,7 +230,13 @@ export function InvoiceForm({
                       type="date"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(e) => {
+                        const next = e.target.value
+                        field.handleChange(next)
+                        // Keep a preset due date anchored to the issue date.
+                        const computed = computeDueDate(dueMode, next)
+                        if (computed) form.setFieldValue('dueDate', computed)
+                      }}
                     />
                   )}
                 </FormField>
@@ -162,12 +247,61 @@ export function InvoiceForm({
               {(field) => (
                 <FormField label="Due date" error={field.state.meta.errorMap.onChange}>
                   {(props) => (
+                    <div className="space-y-2">
+                      <Select
+                        value={dueMode}
+                        onValueChange={(value) => {
+                          const mode = value as DueMode
+                          setDueMode(mode)
+                          if (mode === 'custom') return
+                          // A preset is always valid, so drop any stale error
+                          // (e.g. a custom date that preceded the issue date).
+                          form.setFieldMeta('dueDate', (prev) => ({ ...prev, errorMap: {} }))
+                          const computed = computeDueDate(mode, form.getFieldValue('issueDate'))
+                          if (computed) form.setFieldValue('dueDate', computed)
+                        }}
+                      >
+                        <SelectTrigger {...props} className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DUE_OPTIONS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {dueMode === 'custom' && (
+                        <Input
+                          type="date"
+                          aria-label="Custom due date"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  )}
+                </FormField>
+              )}
+            </form.Field>
+
+            <form.Field name="poNumber">
+              {(field) => (
+                <FormField
+                  label="PO number"
+                  trailing="Optional"
+                  error={field.state.meta.errorMap.onChange}
+                >
+                  {(props) => (
                     <Input
                       {...props}
-                      type="date"
+                      type="text"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
+                      maxLength={100}
                     />
                   )}
                 </FormField>
@@ -192,7 +326,7 @@ export function InvoiceForm({
                     className="grid grid-cols-[1fr_80px_120px_100px_40px] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
                   >
                     <span>Description</span>
-                    <span className="text-right">Qty</span>
+                    <span className="text-right">Quantity</span>
                     <span className="text-right">Unit price</span>
                     <span className="text-right">Amount</span>
                     <span />
@@ -206,78 +340,154 @@ export function InvoiceForm({
                         const descId = `${lineIdBase}-${i}-description`
                         const qtyId = `${lineIdBase}-${i}-quantity`
                         const priceId = `${lineIdBase}-${i}-unit-price`
+                        const perId = `${lineIdBase}-${i}-per`
                         return (
-                          <div className="grid grid-cols-[1fr_80px_120px_100px_40px] items-center gap-2 border-b px-3 py-2 last:border-b-0">
+                          <div className="grid grid-cols-[1fr_80px_120px_100px_40px] items-start gap-2 border-b px-3 py-2 last:border-b-0">
                             <form.Field name={`lineItems[${i}].description`}>
-                              {(descField) => (
-                                <div>
-                                  <label htmlFor={descId} className="sr-only">
-                                    Description for line item {i + 1}
-                                  </label>
-                                  <Input
-                                    id={descId}
-                                    ref={(el) => {
-                                      if (el) descriptionRefs.current.set(i, el)
-                                      else descriptionRefs.current.delete(i)
-                                    }}
-                                    value={descField.state.value}
-                                    onBlur={descField.handleBlur}
-                                    onChange={(e) => descField.handleChange(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') e.preventDefault()
-                                    }}
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                              )}
+                              {(descField) => {
+                                const err = descField.state.meta.errorMap.onChange as
+                                  | string
+                                  | undefined
+                                const errId = err ? `${descId}-error` : undefined
+                                return (
+                                  <div>
+                                    <label htmlFor={descId} className="sr-only">
+                                      Description for line item {i + 1}
+                                    </label>
+                                    <Textarea
+                                      id={descId}
+                                      ref={(el) => {
+                                        if (el) descriptionRefs.current.set(i, el)
+                                        else descriptionRefs.current.delete(i)
+                                      }}
+                                      rows={3}
+                                      value={descField.state.value}
+                                      onBlur={descField.handleBlur}
+                                      onChange={(e) => descField.handleChange(e.target.value)}
+                                      aria-invalid={err ? true : undefined}
+                                      aria-describedby={errId}
+                                      className="min-h-8 resize-y px-3 py-1 text-sm leading-6 field-sizing-content"
+                                    />
+                                    {err && (
+                                      <p id={errId} className="mt-1 text-xs text-destructive">
+                                        Line {i + 1}: {err}
+                                      </p>
+                                    )}
+                                  </div>
+                                )
+                              }}
                             </form.Field>
                             <form.Field name={`lineItems[${i}].quantity`}>
-                              {(qtyField) => (
-                                <div>
-                                  <label htmlFor={qtyId} className="sr-only">
-                                    Quantity for line item {i + 1}
-                                  </label>
-                                  <Input
-                                    id={qtyId}
-                                    value={qtyField.state.value}
-                                    onBlur={qtyField.handleBlur}
-                                    onChange={(e) => qtyField.handleChange(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') e.preventDefault()
-                                    }}
-                                    inputMode="decimal"
-                                    className="h-8 text-right text-sm"
-                                  />
-                                </div>
-                              )}
-                            </form.Field>
-                            <form.Field name={`lineItems[${i}].unitPrice`}>
-                              {(priceField) => (
-                                <div>
-                                  <label htmlFor={priceId} className="sr-only">
-                                    Unit price for line item {i + 1}
-                                  </label>
-                                  <div className="relative">
-                                    <span
-                                      aria-hidden
-                                      className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-sm text-muted-foreground"
-                                    >
-                                      {symbol}
-                                    </span>
+                              {(qtyField) => {
+                                const err = qtyField.state.meta.errorMap.onChange as
+                                  | string
+                                  | undefined
+                                const errId = err ? `${qtyId}-error` : undefined
+                                return (
+                                  <div>
+                                    <label htmlFor={qtyId} className="sr-only">
+                                      Quantity for line item {i + 1}
+                                    </label>
                                     <Input
-                                      id={priceId}
-                                      value={priceField.state.value}
-                                      onBlur={priceField.handleBlur}
-                                      onChange={(e) => priceField.handleChange(e.target.value)}
+                                      id={qtyId}
+                                      value={qtyField.state.value}
+                                      onBlur={qtyField.handleBlur}
+                                      onChange={(e) => qtyField.handleChange(e.target.value)}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') e.preventDefault()
                                       }}
                                       inputMode="decimal"
-                                      className="h-8 pl-7 text-right text-sm"
+                                      aria-invalid={err ? true : undefined}
+                                      aria-describedby={errId}
+                                      className="h-8 text-right text-sm"
                                     />
+                                    {err && (
+                                      <p id={errId} className="mt-1 text-xs text-destructive">
+                                        Line {i + 1}: {err}
+                                      </p>
+                                    )}
                                   </div>
-                                </div>
-                              )}
+                                )
+                              }}
+                            </form.Field>
+                            <form.Field name={`lineItems[${i}].unitPrice`}>
+                              {(priceField) => {
+                                const err = priceField.state.meta.errorMap.onChange as
+                                  | string
+                                  | undefined
+                                const errId = err ? `${priceId}-error` : undefined
+                                return (
+                                  <div className="space-y-1">
+                                    <label htmlFor={priceId} className="sr-only">
+                                      Unit price for line item {i + 1}
+                                    </label>
+                                    <div className="relative">
+                                      <span
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-sm text-muted-foreground"
+                                      >
+                                        {symbol}
+                                      </span>
+                                      <Input
+                                        id={priceId}
+                                        value={priceField.state.value}
+                                        onBlur={priceField.handleBlur}
+                                        onChange={(e) => priceField.handleChange(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') e.preventDefault()
+                                        }}
+                                        inputMode="decimal"
+                                        aria-invalid={err ? true : undefined}
+                                        aria-describedby={errId}
+                                        className="h-8 pl-7 text-right text-sm"
+                                      />
+                                    </div>
+                                    {err && (
+                                      <p id={errId} className="mt-1 text-xs text-destructive">
+                                        Line {i + 1}: {err}
+                                      </p>
+                                    )}
+                                    <form.Field name={`lineItems[${i}].per`}>
+                                      {(perField) => {
+                                        const perErr = perField.state.meta.errorMap.onChange as
+                                          | string
+                                          | undefined
+                                        const perErrId = perErr ? `${perId}-error` : undefined
+                                        return (
+                                          <div className="space-y-1 text-xs">
+                                            <div className="flex items-center justify-end gap-1.5 text-muted-foreground">
+                                              <label htmlFor={perId}>per</label>
+                                              <Input
+                                                id={perId}
+                                                value={perField.state.value}
+                                                onBlur={perField.handleBlur}
+                                                onChange={(e) =>
+                                                  perField.handleChange(e.target.value)
+                                                }
+                                                onKeyDown={(e) => {
+                                                  if (e.key === 'Enter') e.preventDefault()
+                                                }}
+                                                maxLength={30}
+                                                aria-invalid={perErr ? true : undefined}
+                                                aria-describedby={perErrId}
+                                                className="h-7 px-2 text-right text-xs"
+                                              />
+                                            </div>
+                                            {perErr && (
+                                              <p
+                                                id={perErrId}
+                                                className="text-right text-destructive"
+                                              >
+                                                Line {i + 1}: {perErr}
+                                              </p>
+                                            )}
+                                          </div>
+                                        )
+                                      }}
+                                    </form.Field>
+                                  </div>
+                                )
+                              }}
                             </form.Field>
                             <div className="text-right text-sm tabular-nums text-muted-foreground">
                               {lineTotal !== null ? lineTotal : '-'}
@@ -288,7 +498,7 @@ export function InvoiceForm({
                               size="sm"
                               label={`Remove line item ${i + 1}`}
                               aria-disabled={field.state.value.length <= 1 || undefined}
-                              className="h-8 w-8 cursor-pointer p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
+                              className="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
                               onClick={() => {
                                 if (field.state.value.length <= 1) return
                                 field.removeValue(i)
@@ -318,10 +528,11 @@ export function InvoiceForm({
                       description: '',
                       quantity: '1',
                       unitPrice: '',
+                      per: '',
                     })
                   }
                 >
-                  <Plus className="size-3.5" />
+                  <Plus className="size-3.5" aria-hidden="true" />
                   Add line
                 </Button>
               </div>
@@ -412,9 +623,9 @@ export function InvoiceForm({
       <div className="flex items-center gap-3 border-t pt-6">
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-              {submitLabel}
+            <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting || undefined}>
+              {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {isSubmitting ? 'Saving…' : submitLabel}
             </Button>
           )}
         </form.Subscribe>

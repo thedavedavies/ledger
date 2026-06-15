@@ -4,9 +4,11 @@ import { InvoiceForm } from '#/components/InvoiceForm'
 import { listClients } from '#/server/clients.fn'
 import { getCompanyProfile } from '#/server/settings.fn'
 import { getInvoice, updateInvoice } from '#/server/invoices.fn'
+import { utcDateToDateOnly } from '#/lib/date-only'
 import { fromCents } from '#/lib/money'
 
 export const Route = createFileRoute('/invoices/$invoiceId/edit')({
+  head: () => ({ meta: [{ title: 'Edit invoice · Ledger' }] }),
   loader: async ({ params }) => {
     const [inv, clients, profile] = await Promise.all([
       getInvoice({ data: { id: params.invoiceId } }),
@@ -20,7 +22,7 @@ export const Route = createFileRoute('/invoices/$invoiceId/edit')({
 })
 
 function toDateString(d: string | Date): string {
-  return new Date(d).toISOString().split('T')[0]!
+  return utcDateToDateOnly(d)
 }
 
 function EditInvoicePage() {
@@ -39,6 +41,8 @@ function EditInvoicePage() {
       <InvoiceForm
         defaultValues={{
           clientId: inv.clientId,
+          title: inv.title,
+          poNumber: inv.poNumber,
           issueDate: toDateString(inv.issueDate),
           dueDate: toDateString(inv.dueDate),
           taxRate: inv.taxRate,
@@ -47,6 +51,7 @@ function EditInvoicePage() {
             description: li.description,
             quantity: li.quantity,
             unitPrice: fromCents(li.unitPriceCents),
+            per: li.per,
           })),
         }}
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}

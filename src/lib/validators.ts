@@ -1,5 +1,33 @@
 import { z } from 'zod'
 import { CURRENCY_CODES } from './currency'
+import { compareDateOnly, isValidDateOnly } from './date-only'
+
+// `<input type="date">` returns `YYYY-MM-DD` strings.  Reject anything that
+// isn't a real calendar date.  `new Date('2026-02-31')` rolls over to March 3
+// and would otherwise pass a naive isFinite check, so verify the parsed
+// components round-trip back to the same numbers we read out of the string.
+const dateString = (label: string) =>
+  z
+    .string()
+    .refine((v) => isValidDateOnly(v), { message: `${label} must be a valid date (YYYY-MM-DD)` })
+
+// At most two decimal places, no scientific notation, no Infinity/NaN.
+// Prevents '0.001' (silently rounds to $0.00) and 'Infinity' (crashes
+// `BigInt('Infinity')` downstream).
+const moneyString = (label: string, opts: { allowZero?: boolean } = {}) =>
+  z.string().refine(
+    (v) => {
+      if (!/^\d+(\.\d{1,2})?$/.test(v)) return false
+      const n = Number(v)
+      if (!Number.isFinite(n)) return false
+      return opts.allowZero ? n >= 0 : n > 0
+    },
+    {
+      message: opts.allowZero
+        ? `${label} must be 0 or greater with at most 2 decimal places`
+        : `${label} must be greater than 0 with at most 2 decimal places`,
+    },
+  )
 
 /**
  * Canonical payment methods offered in the Record payment dialog.  The DB
@@ -76,47 +104,50 @@ export const invoiceLineInput = z.object({
     .string()
     .min(1, 'Description is required')
     .max(500, 'Description must be 500 characters or fewer'),
-  quantity: z.string().refine(
-    (v) => {
-      if (v === '') return false
-      const n = Number(v)
-      return !isNaN(n) && n > 0
-    },
-    { message: 'Quantity must be greater than 0' },
-  ),
-  unitPrice: z.string().refine(
-    (v) => {
-      if (v === '') return false
-      const n = Number(v)
-      return !isNaN(n) && n >= 0
-    },
-    { message: 'Unit price must be 0 or greater' },
-  ),
+  quantity: moneyString('Quantity'),
+  unitPrice: moneyString('Unit price', { allowZero: true }),
+  per: z.string().max(30, 'Per must be 30 characters or fewer').default(''),
 })
 
 export type InvoiceLineInput = z.infer<typeof invoiceLineInput>
 
-export const invoiceInput = z.object({
-  clientId: z.string().uuid('Please select a client'),
-  issueDate: z.string().min(1, 'Issue date is required'),
-  dueDate: z.string().min(1, 'Due date is required'),
-  taxRate: z
-    .string()
-    .refine(
-      (v) => {
-        if (v === '') return true
-        const n = Number(v)
-        return !isNaN(n) && n >= 0 && n <= 100
-      },
-      { message: 'Tax rate must be between 0 and 100' },
-    )
-    .default('0'),
-  notes: z.string().max(2000, 'Notes must be 2000 characters or fewer').default(''),
-  lineItems: z
-    .array(invoiceLineInput)
-    .min(1, 'An invoice needs at least one line item')
-    .max(100, 'Maximum 100 line items per invoice'),
-})
+export const invoiceInput = z
+  .object({
+    clientId: z.string().uuid('Please select a client'),
+    title: z.string().max(200, 'Title must be 200 characters or fewer').default(''),
+    poNumber: z.string().max(100, 'PO number must be 100 characters or fewer').default(''),
+    issueDate: dateString('Issue date'),
+    dueDate: dateString('Due date'),
+    taxRate: z
+      .string()
+      .refine(
+        (v) => {
+          if (v === '') return true
+          const n = Number(v)
+          return !isNaN(n) && n >= 0 && n <= 100
+        },
+        { message: 'Tax rate must be between 0 and 100' },
+      )
+      .default('0'),
+    notes: z.string().max(2000, 'Notes must be 2000 characters or fewer').default(''),
+    lineItems: z
+      .array(invoiceLineInput)
+      .min(1, 'An invoice needs at least one line item')
+      .max(100, 'Maximum 100 line items per invoice'),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      isValidDateOnly(data.issueDate) &&
+      isValidDateOnly(data.dueDate) &&
+      compareDateOnly(data.dueDate, data.issueDate) < 0
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['dueDate'],
+        message: 'Due date must be on or after issue date',
+      })
+    }
+  })
 
 export type InvoiceInput = z.infer<typeof invoiceInput>
 
@@ -127,15 +158,8 @@ export const invoiceStatusInput = z.object({
 
 export const paymentInput = z.object({
   invoiceId: z.string().uuid(),
-  amount: z.string().refine(
-    (v) => {
-      if (v === '') return false
-      const n = Number(v)
-      return !isNaN(n) && n > 0
-    },
-    { message: 'Amount must be greater than 0' },
-  ),
-  paidAt: z.string().min(1, 'Date is required'),
+  amount: moneyString('Amount'),
+  paidAt: dateString('Paid date'),
   method: z.string().max(100, 'Method must be 100 characters or fewer').default(''),
   reference: z.string().max(100, 'Reference must be 100 characters or fewer').default(''),
   notes: z.string().max(2000, 'Notes must be 2000 characters or fewer').default(''),

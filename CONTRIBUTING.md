@@ -8,17 +8,9 @@ For anything beyond a small bug fix, open a [discussion](https://github.com/thed
 
 Bug fixes don't need discussion. If something is broken, send a PR with a regression test.
 
-## Sign your commits (DCO)
+## Licensing
 
-Every commit must carry a `Signed-off-by` trailer asserting the [Developer Certificate of Origin](https://developercertificate.org/). Use `-s`:
-
-```bash
-git commit -s -m "your message"
-```
-
-This adds `Signed-off-by: Your Name <your.email@example.com>` to the commit message. The `dco` GitHub Action blocks unsigned commits at the PR boundary.
-
-No CLA. Contributors keep copyright over their work.
+No CLA, no DCO. Contributors keep copyright over their work and the project licenses everyone's contributions under [AGPL-3.0-or-later](LICENSE).
 
 ## Dev setup
 

@@ -29,6 +29,34 @@
       "when": 1778355583539,
       "tag": "0003_flaky_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779461892241,
+      "tag": "0004_secret_hellfire_club",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779797659276,
+      "tag": "0005_previous_nuke",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1779799643448,
+      "tag": "0006_silent_yellowjacket",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780390909709,
+      "tag": "0007_brief_black_panther",
+      "breakpoints": true
     }
   ]
 }

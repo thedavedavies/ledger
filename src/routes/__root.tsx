@@ -4,6 +4,7 @@ import { AppShell } from '#/components/AppShell'
 import { Button } from '#/components/ui/button'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
+import { getCompanyProfile } from '#/server/settings.fn'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -17,6 +18,17 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
+  // Root loader so every page has the company profile available for the
+  // sidebar without each route having to fetch it. Tolerates a missing row
+  // (fresh install, broken seed) by returning null instead of throwing.
+  loader: async () => {
+    try {
+      const profile = await getCompanyProfile()
+      return { profile: { businessName: profile.businessName, email: profile.email } }
+    } catch {
+      return { profile: null }
+    }
+  },
   component: RootComponent,
   notFoundComponent: NotFound,
 })
@@ -36,10 +48,11 @@ function NotFound() {
 }
 
 function RootComponent() {
+  const { profile } = Route.useLoaderData()
   return (
     <RootDocument>
       <TooltipProvider>
-        <AppShell>
+        <AppShell profile={profile}>
           <Outlet />
         </AppShell>
         <Toaster position="bottom-right" />

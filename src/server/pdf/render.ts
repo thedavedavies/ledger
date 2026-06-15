@@ -10,6 +10,7 @@ import type { InvoiceTemplateProps } from './invoice-template'
 
 const PDF_RENDER_CONCURRENCY = Math.max(1, Number(process.env['PDF_RENDER_CONCURRENCY']) || 4)
 const MAX_QUEUE = 16
+const RENDER_TIMEOUT_MS = 30_000
 
 let active = 0
 const waiting: Array<{
@@ -42,6 +43,12 @@ function releaseSemaphore(): void {
 export class TooManyRequestsError extends Error {
   constructor() {
     super('Too many concurrent PDF renders')
+  }
+}
+
+export class CompanyProfileMissingError extends Error {
+  constructor() {
+    super('Company profile not configured. Visit Settings to set it up.')
   }
 }
 
@@ -91,8 +98,12 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
       .select()
       .from(companyProfile)
       .where(eq(companyProfile.id, 1))
-      .then((rows) => rows[0]!),
+      .then((rows) => rows[0]),
   ])
+
+  if (!profile) {
+    throw new CompanyProfileMissingError()
+  }
 
   const logoSrc = resolveLogoPath(profile.logoPath)
 
@@ -100,6 +111,8 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
     invoice: {
       number: inv.number,
       status: inv.status,
+      title: inv.title,
+      poNumber: inv.poNumber,
       issueDate: inv.issueDate.toISOString(),
       dueDate: inv.dueDate.toISOString(),
       taxRate: inv.taxRate,
@@ -114,6 +127,7 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
       quantity: li.quantity,
       unitPriceCents: li.unitPriceCents,
       lineTotalCents: li.lineTotalCents,
+      per: li.per,
     })),
     client: clientRow
       ? {
@@ -142,13 +156,39 @@ export async function loadInvoiceData(invoiceId: string): Promise<{
   return { props, invoiceNumber: inv.number }
 }
 
+export class PdfRenderTimeoutError extends Error {
+  constructor() {
+    super(`PDF render exceeded ${RENDER_TIMEOUT_MS}ms`)
+  }
+}
+
 export async function renderInvoicePdf(props: InvoiceTemplateProps): Promise<Buffer> {
   await acquireSemaphore()
+
+  const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
+  // Hold the semaphore until the underlying render actually settles. If the
+  // timeout below wins the race, `renderToBuffer` can't be cancelled, so the
+  // work keeps running. Releasing the slot eagerly would let new renders
+  // start alongside the hung one, breaking PDF_RENDER_CONCURRENCY and risking
+  // CPU/memory exhaustion. Killable workers (worker_threads or a subprocess
+  // pool) would let us actually cancel, but that's a larger refactor.
+  const render = renderToBuffer(element).finally(() => releaseSemaphore())
+  // Defensive: attach a rejection handler so a render that rejects after the
+  // timeout has already won the race doesn't surface as an unhandled rejection.
+  // The route still sees the timeout error via the race below.
+  render.catch(() => {})
+
+  let timer: NodeJS.Timeout | undefined
   try {
-    const element = InvoiceTemplate(props) as React.ReactElement<DocumentProps>
-    const buffer = await renderToBuffer(element)
-    return Buffer.from(buffer)
+    return Buffer.from(
+      await Promise.race([
+        render,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new PdfRenderTimeoutError()), RENDER_TIMEOUT_MS)
+        }),
+      ]),
+    )
   } finally {
-    releaseSemaphore()
+    if (timer) clearTimeout(timer)
   }
 }

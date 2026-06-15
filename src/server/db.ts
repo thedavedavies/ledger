@@ -14,7 +14,17 @@ declare global {
   var __dbClient: ReturnType<typeof postgres> | undefined
 }
 
-const client = globalThis.__dbClient ?? postgres(databaseUrl, { max: 10 })
+const client =
+  globalThis.__dbClient ??
+  postgres(databaseUrl, {
+    max: 10,
+    // Close pooled connections that have sat idle for 30s so a transient pool
+    // exhaustion (a stuck query holding a slot) self-heals over time.
+    idle_timeout: 30,
+    // Server-side cap: 10s per statement. Combined with idle_timeout this
+    // prevents a single slow query from holding a connection indefinitely.
+    connection: { statement_timeout: 10_000 },
+  })
 if (!globalThis.__dbClient) globalThis.__dbClient = client
 
 export const db = drizzle(client, { schema })

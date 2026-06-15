@@ -64,6 +64,41 @@ describe('invoiceLineInput validator', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('defaults per to "" when omitted', () => {
+    const result = invoiceLineInput.safeParse({
+      description: 'Item',
+      quantity: '1',
+      unitPrice: '100.00',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.per).toBe('')
+    }
+  })
+
+  it('accepts a per unit string', () => {
+    const result = invoiceLineInput.safeParse({
+      description: 'Hosting',
+      quantity: '1',
+      unitPrice: '100.00',
+      per: 'year',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.per).toBe('year')
+    }
+  })
+
+  it('rejects per longer than 30 characters', () => {
+    const result = invoiceLineInput.safeParse({
+      description: 'Item',
+      quantity: '1',
+      unitPrice: '100.00',
+      per: 'x'.repeat(31),
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('invoiceInput validator', () => {
@@ -155,6 +190,18 @@ describe('invoiceInput validator', () => {
     expect(result.success).toBe(false)
   })
 
+  it('rejects due date before issue date', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      issueDate: '2026-05-31',
+      dueDate: '2026-05-01',
+      taxRate: '0',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(false)
+  })
+
   it('accepts exactly 100 line items', () => {
     const lines = Array.from({ length: 100 }, () => validLine)
     const result = invoiceInput.safeParse({
@@ -180,5 +227,46 @@ describe('invoiceInput validator', () => {
     if (result.success) {
       expect(result.data.taxRate).toBe('0')
     }
+  })
+
+  it('defaults title to "" when omitted', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      issueDate: '2026-05-01',
+      dueDate: '2026-05-31',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.title).toBe('')
+    }
+  })
+
+  it('accepts a title string', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      title: 'May retainer',
+      issueDate: '2026-05-01',
+      dueDate: '2026-05-31',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.title).toBe('May retainer')
+    }
+  })
+
+  it('rejects title longer than 200 characters', () => {
+    const result = invoiceInput.safeParse({
+      clientId: VALID_UUID,
+      title: 'x'.repeat(201),
+      issueDate: '2026-05-01',
+      dueDate: '2026-05-31',
+      notes: '',
+      lineItems: [validLine],
+    })
+    expect(result.success).toBe(false)
   })
 })
